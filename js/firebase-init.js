@@ -25,8 +25,24 @@ import {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  serverTimestamp,
+  arrayUnion,
+  arrayRemove,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
 
 // আপনার আসল Firebase কনফিগ
 const firebaseConfig = {
@@ -56,6 +72,20 @@ export {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  serverTimestamp,
+  arrayUnion,
+  arrayRemove,
+  storageRef,
+  uploadBytes,
+  getDownloadURL,
 };
 
 export default app;
