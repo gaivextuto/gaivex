@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Explore</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    .ex-top { flex-direction: column; height: auto; padding: 10px 16px 12px; gap: 10px; align-items: stretch; }
+    .ex-top-row { display: flex; align-items: center; gap: 12px; }
+    .ex-top-row a { font-size: 18px; color: var(--text-secondary); }
+    .ex-top-row span { font-size: 16px; font-weight: 700; }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 44px;
+      padding: 0 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line-soft);
+    }
+    .search-box svg { width: 17px; height: 17px; stroke: var(--text-muted); flex: 0 0 auto; }
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+    .search-box input::placeholder { color: var(--text-muted); }
+
+    .ex-body { padding: 16px; max-width: 560px; margin: 0 auto; }
+    .ex-section-title {
+      font-size: 12.5px; font-weight: 700; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.04em;
+      margin: 4px 0 12px;
+    }
+
+    .ex-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .ex-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+    }
+    .ex-item a.ex-link { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+
+    .ex-avatar {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: var(--grad-brand);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px; flex: 0 0 auto;
+      overflow: hidden;
+    }
+    .ex-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+    .ex-info { min-width: 0; }
+    .ex-info b { font-size: 14px; font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ex-info span { font-size: 12px; color: var(--text-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .ex-btn {
+      height: 32px; padding: 0 14px; border-radius: var(--radius-pill);
+      font-size: 12px; font-weight: 700; flex: 0 0 auto;
+    }
+    .ex-btn.add { background: var(--grad-brand); color: #fff; }
+    .ex-btn.pending, .ex-btn.friends { background: rgba(255,255,255,0.05); border: 1px solid var(--line-strong); color: var(--text-secondary); }
+    .ex-btn[disabled] { opacity: 0.55; pointer-events: none; }
+
+    .ex-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 30px 0; }
+    .ex-loading { text-align: center; color: var(--text-muted); font-size: 13px; padding: 30px 0; }
+  </style>
+</head>
+<body>
+  <div class="bg-cosmic"></div>
+
+  <header class="top-bar ex-top">
+    <div class="ex-top-row">
+      <a href="home.html" aria-label="Back">←</a>
+      <span>Explore</span>
+    </div>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search people by username…" />
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="ex-body">
+      <div class="ex-section-title" id="listTitle">People on GAIVEX</div>
+      <p class="ex-loading" id="loadingHint">Loading people…</p>
+      <div class="ex-list" id="peopleList"></div>
+      <p class="ex-empty" id="emptyHint" style="display:none;">No one found.</p>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="home.html" data-page="home">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg>
+      Home
+    </a>
+    <a href="explore.html" data-page="explore" class="active">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      Explore
+    </a>
+    <a href="create-pulse.html" class="nav-fab" aria-label="Create pulse">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </a>
+    <a href="spaces.html" data-page="spaces">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Spaces
+    </a>
+    <a href="profile.html" data-page="profile">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </a>
+  </nav>
+
+  <script type="module">
+    import {
+      db,
+      doc, updateDoc, arrayUnion,
+      collection, query, orderBy, limit, onSnapshot,
+    } from './js/firebase-init.js';
+    import { requireAuth, setActiveNav, showToast } from './js/app.js';
+
+    setActiveNav('explore');
+
+    function initialsOf(name) {
+      return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+    function avatarInner(photoURL, name) {
+      return photoURL ? `<img src="${photoURL}" alt="" />` : initialsOf(name);
+    }
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    let currentUser = null;
+    let allPeople = []; // cached from Firestore, filtered client-side
+
+    function friendState(profile) {
+      const friends = Array.isArray(profile.friends) ? profile.friends : [];
+      const requests = Array.isArray(profile.friendRequests) ? profile.friendRequests : [];
+      if (friends.includes(currentUser.uid)) return 'friends';
+      if (requests.includes(currentUser.uid)) return 'pending';
+      return 'none';
+    }
+
+    function renderList(people) {
+      const listEl = document.getElementById('peopleList');
+      const emptyEl = document.getElementById('emptyHint');
+      listEl.innerHTML = '';
+
+      if (people.length === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
+      emptyEl.style.display = 'none';
+
+      people.forEach((p) => {
+        const state = friendState(p);
+        const item = document.createElement('div');
+        item.className = 'card ex-item';
+        item.innerHTML = `
+          <a class="ex-link" href="profile.html?uid=${p.uid}">
+            <div class="ex-avatar">${avatarInner(p.photoURL, p.username)}</div>
+            <div class="ex-info">
+              <b>${escapeHtml(p.username || 'GAIVEX user')}</b>
+              <span>${escapeHtml(p.bio || p.email || '')}</span>
+            </div>
+          </a>
+          <button class="ex-btn ${state === 'friends' ? 'friends' : state === 'pending' ? 'pending' : 'add'}"
+                  data-uid="${p.uid}" ${state !== 'none' ? 'disabled' : ''}>
+            ${state === 'friends' ? 'Friends ✓' : state === 'pending' ? 'Requested' : 'Add Friend'}
+          </button>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    function applyFilter() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const filtered = q
+        ? allPeople.filter((p) => (p.username || '').toLowerCase().includes(q))
+        : allPeople;
+      document.getElementById('listTitle').textContent = q ? `Results for "${q}"` : 'People on GAIVEX';
+      renderList(filtered);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', applyFilter);
+
+    document.getElementById('peopleList').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-uid]');
+      if (!btn || btn.disabled) return;
+      const uid = btn.dataset.uid;
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      try {
+        await updateDoc(doc(db, 'users', uid), { friendRequests: arrayUnion(currentUser.uid) });
+        btn.textContent = 'Requested';
+        btn.classList.remove('add');
+        btn.classList.add('pending');
+        showToast('Friend request sent ✦');
+      } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        btn.textContent = 'Add Friend';
+        showToast('Could not send request. Try again.');
+      }
+    });
+
+    (async () => {
+      currentUser = await requireAuth();
+      if (!currentUser) return;
+
+      const q = query(collection(db, 'users'), orderBy('username'), limit(50));
+      onSnapshot(q, (snap) => {
+        document.getElementById('loadingHint').style.display = 'none';
+        allPeople = [];
+        snap.forEach((d) => {
+          if (d.id === currentUser.uid) return; // don't list yourself
+          allPeople.push({ uid: d.id, ...d.data() });
+        });
+        applyFilter();
+      }, (err) => {
+        console.error(err);
+        document.getElementById('loadingHint').textContent = 'Could not load people right now.';
+      });
+    })();
+  </script>
+</body>
+</html>
