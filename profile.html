@@ -321,6 +321,14 @@
 
       els.actions.innerHTML = '';
       els.actions.appendChild(btn);
+
+      if (state === 'friends') {
+        const msgBtn = document.createElement('a');
+        msgBtn.href = 'messages.html';
+        msgBtn.className = 'btn btn-primary btn-block';
+        msgBtn.textContent = 'Message';
+        els.actions.appendChild(msgBtn);
+      }
     }
 
     els.bioCancel.addEventListener('click', () => {
