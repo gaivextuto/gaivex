@@ -104,7 +104,10 @@
   <header class="top-bar pf-top">
     <a href="home.html" class="back" id="backBtn">←</a>
     <span class="brand-logo" style="font-size:16px;">Profile</span>
-    <button type="button" class="icon-only" id="logoutBtn">Log out</button>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <a href="settings.html" id="settingsLink" aria-label="Settings" style="color:var(--text-secondary); font-size:18px;">⚙</a>
+      <button type="button" class="icon-only" id="logoutBtn">Log out</button>
+    </div>
   </header>
 
   <main class="page">
@@ -184,6 +187,7 @@
     const els = {
       back: document.getElementById('backBtn'),
       logoutBtn: document.getElementById('logoutBtn'),
+      settingsLink: document.getElementById('settingsLink'),
       avatar: document.getElementById('pfAvatar'),
       avatarText: document.getElementById('pfAvatarText'),
       avatarFile: document.getElementById('avatarFile'),
@@ -393,6 +397,7 @@
 
       els.back.classList.toggle('show', !isOwn);
       els.logoutBtn.style.display = isOwn ? 'block' : 'none';
+      els.settingsLink.style.display = isOwn ? 'inline' : 'none';
       els.postsTitle.textContent = isOwn ? 'My Pulses' : 'Pulses';
       els.bioSave.dataset.uid = targetUid;
 
