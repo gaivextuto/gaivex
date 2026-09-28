@@ -230,7 +230,9 @@
         allPeople = [];
         snap.forEach((d) => {
           if (d.id === currentUser.uid) return; // don't list yourself
-          allPeople.push({ uid: d.id, ...d.data() });
+          const data = d.data();
+          if (data.settings?.isPrivate) return; // private accounts stay out of Explore
+          allPeople.push({ uid: d.id, ...data });
         });
         applyFilter();
       }, (err) => {
