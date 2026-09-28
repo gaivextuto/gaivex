@@ -19,6 +19,7 @@ import {
   signInWithPopup,
   signOut,
   updateProfile,
+  deleteUser,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore,
@@ -26,6 +27,7 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  deleteDoc,
   collection,
   addDoc,
   query,
@@ -69,10 +71,12 @@ export {
   signInWithPopup,
   signOut,
   updateProfile,
+  deleteUser,
   doc,
   setDoc,
   getDoc,
   updateDoc,
+  deleteDoc,
   collection,
   addDoc,
   query,
