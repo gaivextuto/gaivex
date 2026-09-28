@@ -421,12 +421,26 @@
         } else {
           renderOtherActions(currentUser, targetUid, profile);
         }
+
+        const friends = Array.isArray(profile.friends) ? profile.friends : [];
+        const isFriend = friends.includes(currentUser.uid);
+        const isLocked = !isOwn && !!profile.settings?.isPrivate && !isFriend;
+
+        if (isLocked) {
+          els.postsList.innerHTML = '';
+          els.postsEmpty.style.display = 'none';
+          const lock = document.createElement('div');
+          lock.className = 'pf-empty';
+          lock.innerHTML = '🔒 This account is private.<br>Add them as a friend to see their pulses.';
+          els.postsList.parentElement.insertBefore(lock, els.postsList.nextSibling);
+        } else {
+          loadPostsFor(targetUid);
+        }
       } catch (err) {
         console.error(err);
         showToast('Could not load this profile.');
+        loadPostsFor(targetUid);
       }
-
-      loadPostsFor(targetUid);
     })();
   </script>
 </body>
