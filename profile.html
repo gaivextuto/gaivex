@@ -28,7 +28,24 @@
       font-size: 30px; font-weight: 800; color: #fff;
       box-shadow: var(--shadow-glow);
       margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
     }
+    .pf-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .pf-avatar-edit {
+      position: absolute;
+      bottom: 8px; right: -2px;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      border: 2px solid var(--bg-void);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .pf-avatar-edit svg { width: 14px; height: 14px; stroke: var(--cyan); }
+    .pf-avatar.own .pf-avatar-edit { display: flex; }
+    .pf-avatar-uploading { opacity: 0.5; pointer-events: none; }
     .pf-name { font-size: 19px; font-weight: 700; }
     .pf-handle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
     .pf-bio { margin-top: 10px; font-size: 13.5px; color: var(--text-secondary); max-width: 320px; line-height: 1.5; }
@@ -93,7 +110,13 @@
   <main class="page">
     <div class="pf-body">
       <div class="pf-head">
-        <div class="pf-avatar" id="pfAvatar">?</div>
+        <div class="pf-avatar" id="pfAvatar">
+          <span id="pfAvatarText">?</span>
+          <label class="pf-avatar-edit" for="avatarFile" aria-label="Change profile picture">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
+          </label>
+          <input type="file" id="avatarFile" accept="image/*" style="display:none;" />
+        </div>
         <div class="pf-name" id="pfName">…</div>
         <div class="pf-handle" id="pfHandle"></div>
         <p class="pf-bio" id="pfBio"></p>
@@ -145,9 +168,11 @@
 
   <script type="module">
     import {
-      db,
+      db, storage,
       doc, getDoc, updateDoc, arrayUnion,
       collection, query, where, orderBy, onSnapshot,
+      storageRef, uploadBytes, getDownloadURL,
+      auth, updateProfile,
     } from './js/firebase-init.js';
     import { requireAuth, setActiveNav, logout, showToast } from './js/app.js';
 
@@ -160,6 +185,8 @@
       back: document.getElementById('backBtn'),
       logoutBtn: document.getElementById('logoutBtn'),
       avatar: document.getElementById('pfAvatar'),
+      avatarText: document.getElementById('pfAvatarText'),
+      avatarFile: document.getElementById('avatarFile'),
       name: document.getElementById('pfName'),
       handle: document.getElementById('pfHandle'),
       bio: document.getElementById('pfBio'),
@@ -178,6 +205,25 @@
 
     function initialsOf(name) {
       return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+
+    function setAvatar(photoURL, name) {
+      els.avatarText.textContent = initialsOf(name);
+      const existingImg = els.avatar.querySelector('img');
+      if (photoURL) {
+        if (existingImg) {
+          existingImg.src = photoURL;
+        } else {
+          const img = document.createElement('img');
+          img.src = photoURL;
+          img.alt = '';
+          els.avatar.insertBefore(img, els.avatarText);
+          els.avatarText.style.display = 'none';
+        }
+      } else if (existingImg) {
+        existingImg.remove();
+        els.avatarText.style.display = '';
+      }
     }
 
     function escapeHtml(str) {
@@ -300,6 +346,36 @@
 
     els.logoutBtn.addEventListener('click', () => logout());
 
+    els.avatarFile.addEventListener('change', async () => {
+      const file = els.avatarFile.files[0];
+      if (!file || !auth.currentUser) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Please choose an image under 5MB.');
+        return;
+      }
+
+      els.avatar.classList.add('pf-avatar-uploading');
+      try {
+        const path = `avatars/${auth.currentUser.uid}/profile.jpg`;
+        const ref = storageRef(storage, path);
+        await uploadBytes(ref, file);
+        const url = await getDownloadURL(ref);
+
+        await updateDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: url });
+        await updateProfile(auth.currentUser, { photoURL: url });
+
+        setAvatar(url, els.name.textContent);
+        showToast('Profile picture updated ✦');
+      } catch (err) {
+        console.error(err);
+        showToast('Could not upload photo. Please try again.');
+      } finally {
+        els.avatar.classList.remove('pf-avatar-uploading');
+        els.avatarFile.value = '';
+      }
+    });
+
     (async () => {
       const currentUser = await requireAuth();
       if (!currentUser) return;
@@ -319,7 +395,8 @@
           ? (currentUser.displayName || currentUser.email.split('@')[0])
           : (profile.username || 'GAIVEX user');
 
-        els.avatar.textContent = initialsOf(displayName);
+        els.avatar.classList.toggle('own', isOwn);
+        setAvatar(profile.photoURL || (isOwn ? currentUser.photoURL : ''), displayName);
         els.name.textContent = displayName;
         els.handle.textContent = isOwn ? currentUser.email : (profile.email || '');
         els.bio.textContent = profile.bio || (isOwn ? 'Add a short bio to tell people about yourself.' : '');
