@@ -97,6 +97,7 @@
       background: var(--grad-warm);
       display: flex; align-items: center; justify-content: center;
       font-size: 14px; font-weight: 700; flex: 0 0 auto;
+      overflow: hidden;
     }
     .composer .composer-text {
       flex: 1;
@@ -119,7 +120,9 @@
       background: var(--grad-brand);
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 14px; flex: 0 0 auto;
+      overflow: hidden;
     }
+    .pulse-avatar img, .story-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .pulse-meta { flex: 1; min-width: 0; }
     .pulse-name { font-size: 14px; font-weight: 600; }
     .pulse-sub { font-size: 12px; color: var(--text-muted); }
@@ -247,6 +250,12 @@
       return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
     }
 
+    function avatarInner(photoURL, name) {
+      return photoURL
+        ? `<img src="${photoURL}" alt="" />`
+        : initialsOf(name);
+    }
+
     function timeAgo(ts) {
       if (!ts || !ts.toDate) return 'just now';
       const diffMs = Date.now() - ts.toDate().getTime();
@@ -268,7 +277,7 @@
       article.dataset.id = id;
       article.innerHTML = `
         <div class="pulse-head">
-          <div class="pulse-avatar">${initialsOf(post.authorName)}</div>
+          <div class="pulse-avatar">${avatarInner(post.authorPhoto, post.authorName)}</div>
           <div class="pulse-meta">
             <div class="pulse-name">${escapeHtml(post.authorName || 'GAIVEX user')}</div>
             <div class="pulse-sub">${timeAgo(post.createdAt)}</div>
@@ -321,7 +330,7 @@
       a.href = 'profile.html';
       a.className = 'story';
       a.innerHTML = `
-        <div class="story-ring"><div class="story-avatar">${initialsOf(post.authorName)}</div></div>
+        <div class="story-ring"><div class="story-avatar">${avatarInner(post.authorPhoto, post.authorName)}</div></div>
         <span class="story-name">${escapeHtml(post.authorName || 'User')}</span>
       `;
       storiesEl.appendChild(a);
@@ -357,8 +366,7 @@
       if (!user) return; // requireAuth already redirected to auth.html
       currentUser = user;
 
-      const initials = initialsOf(user.displayName || user.email);
-      document.getElementById('composerAvatar').textContent = initials || '?';
+      document.getElementById('composerAvatar').innerHTML = avatarInner(user.photoURL, user.displayName || user.email);
 
       try {
         const snap = await getDoc(doc(db, 'users', user.uid));
