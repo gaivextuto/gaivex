@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Settings</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    .st-top { justify-content: flex-start; gap: 12px; }
+    .st-top a { font-size: 18px; color: var(--text-secondary); }
+    .st-top span { font-size: 16px; font-weight: 700; }
+
+    .st-body { padding: 16px; max-width: 560px; margin: 0 auto calc(24px + var(--safe-bottom)); }
+
+    .st-section-title {
+      font-size: 12.5px; font-weight: 700; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.04em;
+      margin: 22px 0 10px;
+    }
+    .st-section-title:first-child { margin-top: 4px; }
+
+    .st-card { padding: 4px; }
+
+    .st-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 12px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .st-row:last-child { border-bottom: none; }
+
+    .st-row-icon {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: rgba(124,58,237,0.15);
+      display: flex; align-items: center; justify-content: center;
+      flex: 0 0 auto;
+    }
+    .st-row-icon svg { width: 16px; height: 16px; stroke: var(--cyan); }
+
+    .st-row-text { flex: 1; min-width: 0; }
+    .st-row-label { font-size: 14px; font-weight: 500; }
+    .st-row-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+
+    .st-row-value { font-size: 12.5px; color: var(--text-muted); flex: 0 0 auto; max-width: 130px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .st-row-chevron { color: var(--text-muted); font-size: 15px; flex: 0 0 auto; }
+
+    .st-row.danger .st-row-label { color: #fda4af; }
+    .st-row.danger .st-row-icon { background: rgba(244,63,94,0.12); }
+    .st-row.danger .st-row-icon svg { stroke: #fda4af; }
+
+    /* Toggle switch */
+    .toggle {
+      width: 44px; height: 26px; border-radius: 999px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--line-strong);
+      position: relative;
+      flex: 0 0 auto;
+      transition: background 0.2s ease;
+    }
+    .toggle::after {
+      content: "";
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s ease;
+    }
+    .toggle.on { background: var(--grad-brand); border-color: transparent; }
+    .toggle.on::after { transform: translateX(18px); }
+
+    /* Inline edit sheet */
+    .st-inline-edit { display: none; padding: 0 12px 14px; }
+    .st-inline-edit.show { display: block; }
+    .st-inline-edit input {
+      width: 100%;
+      height: 42px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line-soft);
+      color: var(--text-primary);
+      padding: 0 14px;
+      font-size: 14px;
+      outline: none;
+    }
+    .st-inline-edit .row { display: flex; gap: 8px; margin-top: 8px; }
+    .st-inline-edit .row button { height: 34px; padding: 0 16px; border-radius: var(--radius-pill); font-size: 12.5px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="bg-cosmic"></div>
+
+  <header class="top-bar st-top">
+    <a href="profile.html" aria-label="Back">←</a>
+    <span>Settings</span>
+  </header>
+
+  <main class="page">
+    <div class="st-body">
+
+      <div class="st-section-title">Account</div>
+      <div class="card st-card">
+        <div class="st-row" id="editNameRow" style="cursor:pointer;">
+          <div class="st-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="st-row-text">
+            <div class="st-row-label">Display name</div>
+          </div>
+          <div class="st-row-value" id="nameValue">…</div>
+          <span class="st-row-chevron">›</span>
+        </div>
+        <div class="st-inline-edit" id="nameEditWrap">
+          <input type="text" id="nameInput" maxlength="40" />
+          <div class="row">
+            <button type="button" class="btn btn-outline" id="nameCancel">Cancel</button>
+            <button type="button" class="btn btn-primary" id="nameSave">Save</button>
+          </div>
+        </div>
+
+        <div class="st-row">
+          <div class="st-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div>
+          <div class="st-row-text"><div class="st-row-label">Email</div></div>
+          <div class="st-row-value" id="emailValue">…</div>
+        </div>
+      </div>
+
+      <div class="st-section-title">Privacy &amp; Notifications</div>
+      <div class="card st-card">
+        <div class="st-row">
+          <div class="st-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div class="st-row-text">
+            <div class="st-row-label">Private account</div>
+            <div class="st-row-sub">Hide your profile from Explore search</div>
+          </div>
+          <button type="button" class="toggle" id="privacyToggle" data-key="isPrivate"></button>
+        </div>
+        <div class="st-row">
+          <div class="st-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+          <div class="st-row-text">
+            <div class="st-row-label">Push notifications</div>
+            <div class="st-row-sub">Friend requests, likes &amp; messages</div>
+          </div>
+          <button type="button" class="toggle on" id="pushToggle" data-key="pushEnabled"></button>
+        </div>
+        <div class="st-row">
+          <div class="st-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div>
+          <div class="st-row-text">
+            <div class="st-row-label">Email notifications</div>
+          </div>
+          <button type="button" class="toggle" id="emailToggle" data-key="emailEnabled"></button>
+        </div>
+      </div>
+
+      <div class="st-section-title">Appearance</div>
+      <div class="card st-card">
+        <div class="st-row">
+          <div class="st-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg></div>
+          <div class="st-row-text">
+            <div class="st-row-label">Theme</div>
+            <div class="st-row-sub">GAIVEX is cosmic dark by default</div>
+          </div>
+          <div class="st-row-value">Dark</div>
+        </div>
+      </div>
+
+      <div class="st-section-title">Account Actions</div>
+      <div class="card st-card">
+        <div class="st-row" id="logoutRow" style="cursor:pointer;">
+          <div class="st-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></div>
+          <div class="st-row-text"><div class="st-row-label">Log out</div></div>
+        </div>
+        <div class="st-row danger" id="deleteRow" style="cursor:pointer;">
+          <div class="st-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+          <div class="st-row-text">
+            <div class="st-row-label">Delete account</div>
+            <div class="st-row-sub">This permanently removes your account</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, db, doc, getDoc, updateDoc, deleteDoc, updateProfile, deleteUser } from './js/firebase-init.js';
+    import { requireAuth, logout, showToast, ONBOARDING_PAGE } from './js/app.js';
+
+    let currentUser = null;
+
+    function setToggle(el, on) {
+      el.classList.toggle('on', on);
+    }
+
+    async function savePref(key, value) {
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid), { [`settings.${key}`]: value });
+      } catch (err) {
+        console.warn('Could not save preference:', err);
+      }
+    }
+
+    document.querySelectorAll('.toggle').forEach((el) => {
+      el.addEventListener('click', () => {
+        const next = !el.classList.contains('on');
+        setToggle(el, next);
+        savePref(el.dataset.key, next);
+      });
+    });
+
+    // Inline name edit
+    const nameRow = document.getElementById('editNameRow');
+    const nameWrap = document.getElementById('nameEditWrap');
+    const nameInput = document.getElementById('nameInput');
+
+    nameRow.addEventListener('click', () => {
+      nameInput.value = document.getElementById('nameValue').textContent;
+      nameWrap.classList.add('show');
+    });
+    document.getElementById('nameCancel').addEventListener('click', () => nameWrap.classList.remove('show'));
+    document.getElementById('nameSave').addEventListener('click', async () => {
+      const newName = nameInput.value.trim();
+      if (newName.length < 2) { showToast('Name is too short.'); return; }
+      try {
+        await updateProfile(auth.currentUser, { displayName: newName });
+        await updateDoc(doc(db, 'users', currentUser.uid), { username: newName });
+        document.getElementById('nameValue').textContent = newName;
+        nameWrap.classList.remove('show');
+        showToast('Name updated');
+      } catch (err) {
+        console.error(err);
+        showToast('Could not update name.');
+      }
+    });
+
+    document.getElementById('logoutRow').addEventListener('click', () => logout());
+
+    document.getElementById('deleteRow').addEventListener('click', async () => {
+      const sure = window.confirm('Delete your GAIVEX account? This cannot be undone.');
+      if (!sure) return;
+      try {
+        await deleteDoc(doc(db, 'users', currentUser.uid));
+        await deleteUser(auth.currentUser);
+        window.location.replace(ONBOARDING_PAGE);
+      } catch (err) {
+        console.error(err);
+        showToast('Could not delete account. Please log out, log in again, then retry.');
+      }
+    });
+
+    (async () => {
+      currentUser = await requireAuth();
+      if (!currentUser) return;
+
+      document.getElementById('nameValue').textContent = currentUser.displayName || currentUser.email.split('@')[0];
+      document.getElementById('emailValue').textContent = currentUser.email;
+
+      try {
+        const snap = await getDoc(doc(db, 'users', currentUser.uid));
+        const settings = snap.exists() ? (snap.data().settings || {}) : {};
+        setToggle(document.getElementById('privacyToggle'), !!settings.isPrivate);
+        setToggle(document.getElementById('pushToggle'), settings.pushEnabled !== false);
+        setToggle(document.getElementById('emailToggle'), !!settings.emailEnabled);
+      } catch (err) {
+        console.warn('Could not load settings:', err);
+      }
+    })();
+  </script>
+</body>
+</html>
