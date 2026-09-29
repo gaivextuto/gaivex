@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <title>GAIVEX Pulse</title>
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pulse.css">
+
+  <!-- Firebase -->
+  <script type="module" src="js/pulse.js"></script>
+</head>
+
+<body class="pulse-page">
+
+  <!-- HEADER -->
+  <header class="pulse-header">
+
+    <button class="pulse-back" onclick="history.back()">
+      ‹
+    </button>
+
+    <div class="pulse-title">
+      <strong>Pulse</strong>
+      <span>Short Videos</span>
+    </div>
+
+    <button class="pulse-search"
+            onclick="location.href='search.html'">
+      🔍
+    </button>
+
+  </header>
+
+
+  <!-- VIDEO FEED -->
+  <main id="pulseFeed" class="pulse-feed">
+
+    <!-- Loading -->
+    <div id="pulseLoading" class="pulse-loading">
+      <div class="pulse-loader"></div>
+      <p>Loading pulses...</p>
+    </div>
+
+  </main>
+
+
+  <!-- EMPTY STATE -->
+  <div id="pulseEmpty" class="pulse-empty hidden">
+
+    <div class="empty-icon">🎬</div>
+
+    <h2>No Pulses Yet</h2>
+
+    <p>
+      Be the first person to share a short video on GAIVEX.
+    </p>
+
+    <button onclick="location.href='create-pulse.html'">
+      Create Pulse
+    </button>
+
+  </div>
+
+
+  <!-- BOTTOM NAV -->
+  <nav class="pulse-nav">
+
+    <button onclick="location.href='home.html'">
+      <span>⌂</span>
+      <small>Home</small>
+    </button>
+
+    <button class="active">
+      <span>▶</span>
+      <small>Pulse</small>
+    </button>
+
+    <button class="pulse-create"
+            onclick="location.href='create-pulse.html'">
+      <span>+</span>
+    </button>
+
+    <button onclick="location.href='spaces.html'">
+      <span>♧</span>
+      <small>Spaces</small>
+    </button>
+
+    <button onclick="location.href='profile.html'">
+      <span>♙</span>
+      <small>Profile</small>
+    </button>
+
+  </nav>
+
+</body>
+</html>
