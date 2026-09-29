@@ -337,7 +337,7 @@
       if (!post.uid || seenAuthors.has(post.uid) || seenAuthors.size >= 8) return;
       seenAuthors.add(post.uid);
       const a = document.createElement('a');
-      a.href = 'profile.html';
+      a.href = `profile.html?uid=${post.uid}`;
       a.className = 'story';
       a.innerHTML = `
         <div class="story-ring"><div class="story-avatar">${avatarInner(post.authorPhoto, post.authorName)}</div></div>
@@ -345,6 +345,8 @@
       `;
       storiesEl.appendChild(a);
     }
+
+    let blockedUids = [];
 
     function subscribeToFeed() {
       const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(30));
@@ -354,13 +356,15 @@
         seenAuthors.clear();
         Array.from(storiesEl.querySelectorAll('.story:not(.add)')).forEach((el) => el.remove());
 
-        if (snap.empty) {
+        const visibleDocs = snap.docs.filter((d) => !blockedUids.includes(d.data().uid));
+
+        if (visibleDocs.length === 0) {
           emptyHint.style.display = 'block';
           return;
         }
         emptyHint.style.display = 'none';
 
-        snap.forEach((docSnap) => {
+        visibleDocs.forEach((docSnap) => {
           const post = docSnap.data();
           feedEl.appendChild(renderPost(docSnap.id, post));
           addStoryFor(post);
@@ -384,6 +388,9 @@
           const profile = snap.data();
           if (Array.isArray(profile.friendRequests) && profile.friendRequests.length > 0) {
             document.getElementById('notifDot').style.display = 'block';
+          }
+          if (Array.isArray(profile.blocked)) {
+            blockedUids = profile.blocked;
           }
         }
       } catch (err) {
