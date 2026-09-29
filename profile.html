@@ -333,6 +333,23 @@
         msgBtn.textContent = 'Message';
         els.actions.appendChild(msgBtn);
       }
+
+      const blockBtn = document.createElement('button');
+      blockBtn.type = 'button';
+      blockBtn.textContent = 'Block';
+      blockBtn.style.cssText = 'margin-top:10px; font-size:12px; color:var(--text-muted); text-decoration:underline; background:none;';
+      blockBtn.addEventListener('click', async () => {
+        if (!window.confirm('Block this user? They will be hidden from your Explore list and feed.')) return;
+        try {
+          await updateDoc(doc(db, 'users', currentUser.uid), { blocked: arrayUnion(targetUid) });
+          showToast('User blocked');
+          window.location.href = 'explore.html';
+        } catch (err) {
+          console.error(err);
+          showToast('Could not block user.');
+        }
+      });
+      els.actions.appendChild(blockBtn);
     }
 
     els.bioCancel.addEventListener('click', () => {
