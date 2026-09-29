@@ -136,7 +136,7 @@
       doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment,
       collection, addDoc, query, orderBy, onSnapshot, serverTimestamp,
     } from './js/firebase-init.js';
-    import { requireAuth } from './js/app.js';
+    import { requireAuth, showToast } from './js/app.js';
 
     const postId = new URLSearchParams(window.location.search).get('id');
 
@@ -247,6 +247,9 @@
       } catch (err) {
         console.error(err);
         input.value = text;
+        showToast(err.code === 'permission-denied'
+          ? 'Comments are blocked by Firestore rules — see the setup note.'
+          : 'Could not post comment. Please try again.');
       }
     }
 
