@@ -1,0 +1,632 @@
+/* =========================================
+   GAIVEX PULSE
+   Short Video / Reels UI
+========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(90, 40, 180, .20),
+      transparent 35%
+    ),
+    #080817;
+
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.pulse-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 68px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 18px;
+
+  z-index: 100;
+
+  background: rgba(8, 8, 23, .72);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+
+.pulse-back,
+.pulse-search {
+  width: 44px;
+  height: 44px;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: rgba(255,255,255,.07);
+
+  color: white;
+
+  font-size: 24px;
+
+  cursor: pointer;
+}
+
+
+.pulse-search {
+  font-size: 19px;
+}
+
+
+.pulse-title {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+
+  line-height: 1.1;
+}
+
+
+.pulse-title strong {
+  font-size: 19px;
+}
+
+
+.pulse-title span {
+  margin-top: 4px;
+
+  font-size: 11px;
+
+  color: #9292b5;
+}
+
+
+/* =========================================
+   VIDEO FEED
+========================================= */
+
+.pulse-feed {
+
+  position: fixed;
+
+  top: 68px;
+  left: 0;
+  right: 0;
+  bottom: 70px;
+
+  overflow-y: auto;
+
+  scroll-snap-type: y mandatory;
+
+  overscroll-behavior-y: contain;
+
+  scrollbar-width: none;
+}
+
+.pulse-feed::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* =========================================
+   VIDEO ITEM
+========================================= */
+
+.pulse-item {
+
+  position: relative;
+
+  width: 100%;
+
+  height: 100%;
+
+  min-height: 100%;
+
+  scroll-snap-align: start;
+
+  scroll-snap-stop: always;
+
+  overflow: hidden;
+
+  background: #05050e;
+}
+
+
+.pulse-video {
+
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  background: #05050e;
+}
+
+
+/* dark overlay */
+
+.pulse-item::after {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,.35),
+      transparent 30%,
+      transparent 55%,
+      rgba(0,0,0,.82)
+    );
+}
+
+
+/* =========================================
+   VIDEO INFORMATION
+========================================= */
+
+.pulse-info {
+
+  position: absolute;
+
+  left: 18px;
+  right: 82px;
+  bottom: 22px;
+
+  z-index: 5;
+}
+
+
+.pulse-user {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 12px;
+}
+
+
+.pulse-avatar {
+
+  width: 44px;
+  height: 44px;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  border: 2px solid #684cff;
+}
+
+
+.pulse-user-name {
+
+  font-size: 16px;
+
+  font-weight: 700;
+}
+
+
+.pulse-follow {
+
+  margin-left: 5px;
+
+  padding: 6px 12px;
+
+  border: 1px solid rgba(255,255,255,.35);
+
+  border-radius: 20px;
+
+  background: rgba(255,255,255,.08);
+
+  color: white;
+
+  font-size: 11px;
+}
+
+
+.pulse-caption {
+
+  font-size: 15px;
+
+  line-height: 1.45;
+
+  margin-bottom: 10px;
+}
+
+
+.pulse-views {
+
+  color: #c2c2d5;
+
+  font-size: 12px;
+}
+
+
+/* =========================================
+   ACTIONS
+========================================= */
+
+.pulse-actions {
+
+  position: absolute;
+
+  right: 15px;
+  bottom: 30px;
+
+  z-index: 10;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 18px;
+}
+
+
+.pulse-action {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 4px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: white;
+
+  cursor: pointer;
+}
+
+
+.pulse-action-icon {
+
+  width: 45px;
+  height: 45px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(0,0,0,.35);
+
+  backdrop-filter: blur(10px);
+
+  font-size: 22px;
+}
+
+
+.pulse-action-count {
+
+  font-size: 11px;
+
+  color: #ddd;
+}
+
+
+.pulse-action.liked .pulse-action-icon {
+
+  color: #ff3b91;
+
+  transform: scale(1.08);
+}
+
+
+.pulse-action.saved .pulse-action-icon {
+
+  color: #61a8ff;
+}
+
+
+/* =========================================
+   PLAY BUTTON
+========================================= */
+
+.pulse-play {
+
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  width: 70px;
+  height: 70px;
+
+  border: 0;
+
+  border-radius: 50%;
+
+  background: rgba(0,0,0,.5);
+
+  color: white;
+
+  font-size: 28px;
+
+  opacity: 0;
+
+  transition: .2s;
+
+  z-index: 8;
+}
+
+
+.pulse-item.paused .pulse-play {
+
+  opacity: 1;
+}
+
+
+/* =========================================
+   LOADING
+========================================= */
+
+.pulse-loading {
+
+  height: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  color: #9999b5;
+}
+
+
+.pulse-loader {
+
+  width: 35px;
+  height: 35px;
+
+  border-radius: 50%;
+
+  border: 3px solid rgba(255,255,255,.12);
+
+  border-top-color: #6555ff;
+
+  animation: pulseSpin .8s linear infinite;
+
+  margin-bottom: 12px;
+}
+
+
+@keyframes pulseSpin {
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
+
+/* =========================================
+   EMPTY
+========================================= */
+
+.pulse-empty {
+
+  position: fixed;
+
+  inset: 68px 0 70px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 30px;
+}
+
+
+.pulse-empty.hidden {
+  display: none;
+}
+
+
+.empty-icon {
+  font-size: 55px;
+}
+
+
+.pulse-empty h2 {
+  margin-bottom: 5px;
+}
+
+
+.pulse-empty p {
+
+  max-width: 300px;
+
+  color: #9999b5;
+
+  line-height: 1.5;
+}
+
+
+.pulse-empty button {
+
+  margin-top: 15px;
+
+  padding: 12px 22px;
+
+  border: 0;
+
+  border-radius: 25px;
+
+  background: linear-gradient(
+    90deg,
+    #5a43ff,
+    #00baff
+  );
+
+  color: white;
+
+  font-weight: 700;
+}
+
+
+/* =========================================
+   BOTTOM NAV
+========================================= */
+
+.pulse-nav {
+
+  position: fixed;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 70px;
+
+  z-index: 100;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-around;
+
+  background: rgba(8,8,23,.88);
+
+  backdrop-filter: blur(18px);
+
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+
+.pulse-nav button {
+
+  width: 20%;
+
+  height: 100%;
+
+  border: 0;
+
+  background: transparent;
+
+  color: #777895;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  font-size: 20px;
+}
+
+
+.pulse-nav small {
+  font-size: 10px;
+}
+
+
+.pulse-nav button.active {
+  color: #25cfff;
+}
+
+
+.pulse-create {
+
+  width: 55px !important;
+  height: 55px !important;
+
+  margin-top: -25px;
+
+  border-radius: 50% !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6048ff,
+      #00cfff
+    ) !important;
+
+  color: white !important;
+
+  font-size: 30px !important;
+
+  box-shadow:
+    0 8px 30px rgba(55,80,255,.35);
+}
+
+
+/* MOBILE */
+
+@media (min-width: 700px) {
+
+  .pulse-feed {
+    max-width: 480px;
+    margin: auto;
+  }
+
+  .pulse-header {
+    max-width: 480px;
+    margin: auto;
+  }
+
+  .pulse-nav {
+    max-width: 480px;
+    margin: auto;
+  }
+
+}
