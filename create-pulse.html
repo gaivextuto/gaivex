@@ -56,7 +56,7 @@
       overflow: hidden;
       display: none;
     }
-    .cp-preview img { width: 100%; display: block; max-height: 320px; object-fit: cover; }
+    .cp-preview img, .cp-preview video { width: 100%; display: block; max-height: 400px; object-fit: cover; }
     .cp-preview .remove-media {
       position: absolute; top: 10px; right: 10px;
       width: 28px; height: 28px; border-radius: 50%;
@@ -115,17 +115,19 @@
     <textarea id="cpText" placeholder="What's happening in your universe?" maxlength="500"></textarea>
 
     <div class="cp-preview" id="cpPreview">
-      <img id="cpPreviewImg" alt="Attached image preview" />
+      <img id="cpPreviewImg" alt="Attached image preview" style="display:none;" />
+      <video id="cpPreviewVideo" muted autoplay loop playsinline style="display:none;"></video>
       <button type="button" class="remove-media" id="removeMedia">×</button>
     </div>
 
     <p class="cp-error" id="cpError"></p>
 
     <div class="cp-toolbar">
-      <label class="cp-tool" for="cpFile" aria-label="Add photo">
+      <label class="cp-tool" for="cpFile" aria-label="Add photo or video">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
       </label>
-      <input type="file" id="cpFile" accept="image/*" style="display:none;" />
+      <input type="file" id="cpFile" accept="image/*,video/*" style="display:none;" />
+      <span style="font-size:11px; color:var(--text-muted);">Photos &amp; short videos</span>
       <span class="cp-char-count" id="charCount">0 / 500</span>
     </div>
   </main>
@@ -140,6 +142,7 @@
 
     let currentUser = null;
     let selectedFile = null;
+    let selectedIsVideo = false;
 
     const els = {
       avatar: document.getElementById('cpAvatar'),
@@ -149,6 +152,7 @@
       file: document.getElementById('cpFile'),
       preview: document.getElementById('cpPreview'),
       previewImg: document.getElementById('cpPreviewImg'),
+      previewVideo: document.getElementById('cpPreviewVideo'),
       removeMedia: document.getElementById('removeMedia'),
       charCount: document.getElementById('charCount'),
       error: document.getElementById('cpError'),
@@ -177,20 +181,37 @@
     els.file.addEventListener('change', () => {
       const file = els.file.files[0];
       if (!file) return;
+
+      const isVideo = file.type.startsWith('video/');
+
+      if (isVideo && file.size > 60 * 1024 * 1024) {
+        showToast('That video is quite large — try one under 60MB.');
+      }
+
       selectedFile = file;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        els.previewImg.src = e.target.result;
-        els.preview.style.display = 'block';
-      };
-      reader.readAsDataURL(file);
+      selectedIsVideo = isVideo;
+      const url = URL.createObjectURL(file);
+
+      if (isVideo) {
+        els.previewImg.style.display = 'none';
+        els.previewVideo.src = url;
+        els.previewVideo.style.display = 'block';
+      } else {
+        els.previewVideo.style.display = 'none';
+        els.previewImg.src = url;
+        els.previewImg.style.display = 'block';
+      }
+      els.preview.style.display = 'block';
       updatePostButton();
     });
 
     els.removeMedia.addEventListener('click', () => {
       selectedFile = null;
+      selectedIsVideo = false;
       els.file.value = '';
       els.preview.style.display = 'none';
+      els.previewImg.style.display = 'none';
+      els.previewVideo.style.display = 'none';
       updatePostButton();
     });
 
@@ -203,30 +224,53 @@
       if (!currentUser) return;
       els.error.style.display = 'none';
       els.postBtn.disabled = true;
-      els.postBtn.textContent = 'Posting…';
+      els.postBtn.textContent = selectedIsVideo ? 'Uploading video…' : 'Posting…';
 
       try {
-        let mediaURL = '';
-        if (selectedFile) {
-          const path = `pulses/${currentUser.uid}/${Date.now()}_${selectedFile.name}`;
+        if (selectedIsVideo) {
+          // Short video → goes to the "reels" collection and shows up in the Pulse tab.
+          const path = `reels/${currentUser.uid}/${Date.now()}_${selectedFile.name}`;
           const ref = storageRef(storage, path);
           await uploadBytes(ref, selectedFile);
-          mediaURL = await getDownloadURL(ref);
+          const videoURL = await getDownloadURL(ref);
+
+          await addDoc(collection(db, 'reels'), {
+            uid: currentUser.uid,
+            authorName: currentUser.displayName || currentUser.email.split('@')[0],
+            authorPhoto: currentUser.photoURL || '',
+            videoURL,
+            caption: els.text.value.trim(),
+            likes: [],
+            commentsCount: 0,
+            createdAt: serverTimestamp(),
+          });
+
+          showToast('Added to Pulse ✦');
+          window.location.href = 'pulse.html';
+        } else {
+          // Text / photo → goes to the "posts" collection and shows up in the Home feed.
+          let mediaURL = '';
+          if (selectedFile) {
+            const path = `pulses/${currentUser.uid}/${Date.now()}_${selectedFile.name}`;
+            const ref = storageRef(storage, path);
+            await uploadBytes(ref, selectedFile);
+            mediaURL = await getDownloadURL(ref);
+          }
+
+          await addDoc(collection(db, 'posts'), {
+            uid: currentUser.uid,
+            authorName: currentUser.displayName || currentUser.email.split('@')[0],
+            authorPhoto: currentUser.photoURL || '',
+            text: els.text.value.trim(),
+            mediaURL,
+            likes: [],
+            commentsCount: 0,
+            createdAt: serverTimestamp(),
+          });
+
+          showToast('Pulse posted ✦');
+          window.location.href = 'home.html';
         }
-
-        await addDoc(collection(db, 'posts'), {
-          uid: currentUser.uid,
-          authorName: currentUser.displayName || currentUser.email.split('@')[0],
-          authorPhoto: currentUser.photoURL || '',
-          text: els.text.value.trim(),
-          mediaURL,
-          likes: [],
-          commentsCount: 0,
-          createdAt: serverTimestamp(),
-        });
-
-        showToast('Pulse posted ✦');
-        window.location.href = 'home.html';
       } catch (err) {
         console.error(err);
         showError('Could not post right now. Please try again.');
