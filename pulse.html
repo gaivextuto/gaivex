@@ -1,100 +1,421 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Pulse</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
 
-  <title>GAIVEX Pulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/pulse.css">
+  <link rel="stylesheet" href="css/style.css" />
 
-  <!-- Firebase -->
-  <script type="module" src="js/pulse.js"></script>
+  <style>
+    html, body { height: 100%; background: #000; }
+    body { overflow: hidden; }
+
+    .pl-top {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 25;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: calc(12px + var(--safe-top)) 16px 40px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .pl-top a { pointer-events: auto; color: #fff; font-size: 18px; }
+    .pl-top .brand { pointer-events: auto; font-weight: 800; font-size: 16px; color: #fff; }
+
+    .pl-feed {
+      height: 100dvh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+    }
+    .pl-feed::-webkit-scrollbar { display: none; }
+
+    .pl-item {
+      position: relative;
+      height: 100dvh;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: flex-end;
+      background: #000;
+      overflow: hidden;
+    }
+    .pl-item video {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .pl-item .scrim {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.75) 100%);
+      pointer-events: none;
+    }
+
+    .pl-info {
+      position: relative; z-index: 5;
+      padding: 0 84px 96px 16px;
+      color: #fff;
+      width: 100%;
+    }
+    .pl-author { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .pl-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--grad-brand);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 12px; flex: 0 0 auto; overflow: hidden;
+      border: 1.5px solid rgba(255,255,255,0.6);
+    }
+    .pl-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .pl-author b { font-size: 14px; font-weight: 700; }
+    .pl-caption { font-size: 13.5px; line-height: 1.45; max-width: 260px; }
+
+    .pl-actions {
+      position: absolute; right: 10px; bottom: 96px; z-index: 5;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+    }
+    .pl-action-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      color: #fff; font-size: 11px; font-weight: 600;
+    }
+    .pl-action-btn .circle {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pl-action-btn svg { width: 20px; height: 20px; stroke: #fff; }
+    .pl-action-btn.liked .circle { background: var(--magenta); }
+    .pl-action-btn.liked svg { fill: #fff; stroke: #fff; }
+
+    .pl-mute {
+      position: absolute; top: calc(16px + var(--safe-top)); right: 16px; z-index: 6;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pl-mute svg { width: 16px; height: 16px; stroke: #fff; }
+
+    .pl-empty {
+      height: 100dvh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; padding: 0 30px; text-align: center;
+      color: var(--text-secondary); background: var(--bg-void);
+    }
+    .pl-empty svg { width: 44px; height: 44px; stroke: var(--cyan); }
+
+    /* Comments bottom sheet */
+    .pl-sheet-backdrop {
+      position: fixed; inset: 0; z-index: 60;
+      background: rgba(0,0,0,0.6);
+      display: none; align-items: flex-end;
+    }
+    .pl-sheet-backdrop.show { display: flex; }
+    .pl-sheet {
+      width: 100%; max-height: 70vh;
+      background: var(--bg-surface);
+      border: 1px solid var(--line-soft);
+      border-radius: 22px 22px 0 0;
+      display: flex; flex-direction: column;
+      padding-bottom: var(--safe-bottom);
+    }
+    .pl-sheet-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 1px solid var(--line-soft);
+      font-size: 14px; font-weight: 700;
+    }
+    .pl-sheet-head button { color: var(--text-secondary); font-size: 18px; }
+    .pl-sheet-list { flex: 1; overflow-y: auto; padding: 12px 16px; }
+    .pl-comment { display: flex; gap: 8px; margin-bottom: 14px; }
+    .pl-comment-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--grad-brand);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex: 0 0 auto; overflow: hidden;
+    }
+    .pl-comment-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .pl-comment-name { font-size: 12.5px; font-weight: 600; }
+    .pl-comment-text { font-size: 13px; color: var(--text-secondary); margin-top: 1px; }
+    .pl-sheet-input {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; border-top: 1px solid var(--line-soft);
+    }
+    .pl-sheet-input input {
+      flex: 1; height: 40px; border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.05); border: 1px solid var(--line-soft);
+      color: var(--text-primary); padding: 0 14px; font-size: 13.5px; outline: none;
+    }
+    .pl-sheet-input button {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--grad-brand);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pl-sheet-input button svg { width: 16px; height: 16px; stroke: #fff; }
+    .pl-comments-empty { text-align: center; color: var(--text-muted); font-size: 12.5px; padding: 20px 0; }
+  </style>
 </head>
-
-<body class="pulse-page">
-
-  <!-- HEADER -->
-  <header class="pulse-header">
-
-    <button class="pulse-back" onclick="history.back()">
-      ‹
-    </button>
-
-    <div class="pulse-title">
-      <strong>Pulse</strong>
-      <span>Short Videos</span>
-    </div>
-
-    <button class="pulse-search"
-            onclick="location.href='search.html'">
-      🔍
-    </button>
-
-  </header>
-
-
-  <!-- VIDEO FEED -->
-  <main id="pulseFeed" class="pulse-feed">
-
-    <!-- Loading -->
-    <div id="pulseLoading" class="pulse-loading">
-      <div class="pulse-loader"></div>
-      <p>Loading pulses...</p>
-    </div>
-
-  </main>
-
-
-  <!-- EMPTY STATE -->
-  <div id="pulseEmpty" class="pulse-empty hidden">
-
-    <div class="empty-icon">🎬</div>
-
-    <h2>No Pulses Yet</h2>
-
-    <p>
-      Be the first person to share a short video on GAIVEX.
-    </p>
-
-    <button onclick="location.href='create-pulse.html'">
-      Create Pulse
-    </button>
-
+<body>
+  <div class="pl-top">
+    <a href="home.html" aria-label="Back">←</a>
+    <span class="brand">Pulse</span>
+    <a href="create-pulse.html" aria-label="Add video">＋</a>
   </div>
 
+  <div id="feedWrap"></div>
 
-  <!-- BOTTOM NAV -->
-  <nav class="pulse-nav">
-
-    <button onclick="location.href='home.html'">
-      <span>⌂</span>
-      <small>Home</small>
-    </button>
-
-    <button class="active">
-      <span>▶</span>
-      <small>Pulse</small>
-    </button>
-
-    <button class="pulse-create"
-            onclick="location.href='create-pulse.html'">
-      <span>+</span>
-    </button>
-
-    <button onclick="location.href='spaces.html'">
-      <span>♧</span>
-      <small>Spaces</small>
-    </button>
-
-    <button onclick="location.href='profile.html'">
-      <span>♙</span>
-      <small>Profile</small>
-    </button>
-
+  <nav class="bottom-nav">
+    <a href="home.html" data-page="home">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg>
+      Home
+    </a>
+    <a href="pulse.html" data-page="pulse" class="active">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none"/></svg>
+      Pulse
+    </a>
+    <a href="create-pulse.html" class="nav-fab" aria-label="Create pulse">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </a>
+    <a href="spaces.html" data-page="spaces">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Spaces
+    </a>
+    <a href="profile.html" data-page="profile">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </a>
   </nav>
 
+  <div class="pl-sheet-backdrop" id="sheetBackdrop">
+    <div class="pl-sheet">
+      <div class="pl-sheet-head">
+        <span>Comments</span>
+        <button type="button" id="closeSheet">×</button>
+      </div>
+      <div class="pl-sheet-list" id="sheetComments"></div>
+      <div class="pl-sheet-input">
+        <input type="text" id="sheetInput" placeholder="Add a comment…" maxlength="500" />
+        <button type="button" id="sheetSend">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      db,
+      doc, updateDoc, arrayUnion, arrayRemove, increment,
+      collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
+    } from './js/firebase-init.js';
+    import { requireAuth, setActiveNav } from './js/app.js';
+
+    setActiveNav('pulse');
+
+    function initialsOf(name) {
+      return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+    function avatarInner(photoURL, name) {
+      return photoURL ? `<img src="${photoURL}" alt="" />` : initialsOf(name);
+    }
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    let currentUser = null;
+    let activeReelId = null;
+    let unsubSheetComments = null;
+    let muted = true;
+
+    function renderEmpty() {
+      document.getElementById('feedWrap').innerHTML = `
+        <div class="pl-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          <div>No pulses yet — be the first to share a short video.</div>
+          <a href="create-pulse.html" class="btn btn-primary">Create a Pulse</a>
+        </div>
+      `;
+    }
+
+    function renderReel(id, reel) {
+      const likes = Array.isArray(reel.likes) ? reel.likes : [];
+      const liked = currentUser && likes.includes(currentUser.uid);
+
+      const item = document.createElement('div');
+      item.className = 'pl-item';
+      item.dataset.id = id;
+      item.innerHTML = `
+        <video src="${reel.videoURL}" loop playsinline muted></video>
+        <button class="pl-mute" aria-label="Toggle sound">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>
+        </button>
+        <div class="scrim"></div>
+        <div class="pl-actions">
+          <button class="pl-action-btn like-btn ${liked ? 'liked' : ''}">
+            <span class="circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
+            <span class="like-count">${likes.length}</span>
+          </button>
+          <button class="pl-action-btn comment-btn">
+            <span class="circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+            <span>${reel.commentsCount || 0}</span>
+          </button>
+        </div>
+        <div class="pl-info">
+          <div class="pl-author">
+            <div class="pl-avatar">${avatarInner(reel.authorPhoto, reel.authorName)}</div>
+            <b>${escapeHtml(reel.authorName || 'GAIVEX user')}</b>
+          </div>
+          ${reel.caption ? `<div class="pl-caption">${escapeHtml(reel.caption)}</div>` : ''}
+        </div>
+      `;
+
+      const video = item.querySelector('video');
+
+      item.querySelector('.pl-mute').addEventListener('click', (e) => {
+        e.stopPropagation();
+        muted = !muted;
+        document.querySelectorAll('.pl-item video').forEach((v) => { v.muted = muted; });
+      });
+
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.pl-actions') || e.target.closest('.pl-mute')) return;
+        if (video.paused) video.play(); else video.pause();
+      });
+
+      item.querySelector('.like-btn').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!currentUser) return;
+        const btn = item.querySelector('.like-btn');
+        const nowLiked = btn.classList.contains('liked');
+        try {
+          await updateDoc(doc(db, 'reels', id), {
+            likes: nowLiked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid),
+          });
+        } catch (err) {
+          console.warn('Could not update like:', err);
+        }
+      });
+
+      item.querySelector('.comment-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openComments(id);
+      });
+
+      return item;
+    }
+
+    function setupAutoplay() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target.querySelector('video');
+          if (!video) return;
+          if (entry.isIntersecting) {
+            video.muted = muted;
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      }, { threshold: 0.6 });
+
+      document.querySelectorAll('.pl-item').forEach((item) => observer.observe(item));
+    }
+
+    function subscribeFeed() {
+      const q = query(collection(db, 'reels'), orderBy('createdAt', 'desc'), limit(30));
+      onSnapshot(q, (snap) => {
+        if (snap.empty) {
+          renderEmpty();
+          return;
+        }
+        const wrap = document.createElement('div');
+        wrap.className = 'pl-feed';
+        snap.forEach((d) => wrap.appendChild(renderReel(d.id, d.data())));
+
+        const feedWrap = document.getElementById('feedWrap');
+        feedWrap.innerHTML = '';
+        feedWrap.appendChild(wrap);
+        setupAutoplay();
+      }, (err) => {
+        console.error('Pulse feed error:', err);
+      });
+    }
+
+    // ---- Comments sheet ----
+    function openComments(reelId) {
+      activeReelId = reelId;
+      document.getElementById('sheetBackdrop').classList.add('show');
+
+      const q = query(collection(db, 'reels', reelId, 'comments'), orderBy('createdAt', 'asc'));
+      if (unsubSheetComments) unsubSheetComments();
+      const listEl = document.getElementById('sheetComments');
+
+      unsubSheetComments = onSnapshot(q, (snap) => {
+        listEl.innerHTML = '';
+        if (snap.empty) {
+          listEl.innerHTML = '<p class="pl-comments-empty">No comments yet.</p>';
+          return;
+        }
+        snap.forEach((d) => {
+          const c = d.data();
+          const row = document.createElement('div');
+          row.className = 'pl-comment';
+          row.innerHTML = `
+            <div class="pl-comment-avatar">${avatarInner(c.photoURL, c.name)}</div>
+            <div>
+              <div class="pl-comment-name">${escapeHtml(c.name || 'GAIVEX user')}</div>
+              <div class="pl-comment-text">${escapeHtml(c.text)}</div>
+            </div>
+          `;
+          listEl.appendChild(row);
+        });
+        listEl.scrollTop = listEl.scrollHeight;
+      });
+    }
+
+    function closeComments() {
+      document.getElementById('sheetBackdrop').classList.remove('show');
+      if (unsubSheetComments) { unsubSheetComments(); unsubSheetComments = null; }
+      activeReelId = null;
+    }
+
+    document.getElementById('closeSheet').addEventListener('click', closeComments);
+    document.getElementById('sheetBackdrop').addEventListener('click', (e) => {
+      if (e.target.id === 'sheetBackdrop') closeComments();
+    });
+
+    async function sendSheetComment() {
+      const input = document.getElementById('sheetInput');
+      const text = input.value.trim();
+      if (!text || !activeReelId || !currentUser) return;
+      input.value = '';
+      try {
+        await addDoc(collection(db, 'reels', activeReelId, 'comments'), {
+          uid: currentUser.uid,
+          name: currentUser.displayName || currentUser.email.split('@')[0],
+          photoURL: currentUser.photoURL || '',
+          text,
+          createdAt: serverTimestamp(),
+        });
+        await updateDoc(doc(db, 'reels', activeReelId), { commentsCount: increment(1) });
+      } catch (err) {
+        console.error(err);
+        input.value = text;
+      }
+    }
+    document.getElementById('sheetSend').addEventListener('click', sendSheetComment);
+    document.getElementById('sheetInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendSheetComment();
+    });
+
+    (async () => {
+      currentUser = await requireAuth();
+      if (!currentUser) return;
+      subscribeFeed();
+    })();
+  </script>
 </body>
 </html>
