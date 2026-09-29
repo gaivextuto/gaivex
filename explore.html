@@ -127,7 +127,7 @@
   <script type="module">
     import {
       db,
-      doc, updateDoc, arrayUnion,
+      doc, getDoc, updateDoc, arrayUnion,
       collection, query, orderBy, limit, onSnapshot,
     } from './js/firebase-init.js';
     import { requireAuth, setActiveNav, showToast } from './js/app.js';
@@ -224,6 +224,14 @@
       currentUser = await requireAuth();
       if (!currentUser) return;
 
+      let myBlocked = [];
+      try {
+        const mySnap = await getDoc(doc(db, 'users', currentUser.uid));
+        myBlocked = mySnap.exists() && Array.isArray(mySnap.data().blocked) ? mySnap.data().blocked : [];
+      } catch (err) {
+        console.warn('Could not load blocked list:', err);
+      }
+
       const q = query(collection(db, 'users'), orderBy('username'), limit(50));
       onSnapshot(q, (snap) => {
         document.getElementById('loadingHint').style.display = 'none';
@@ -232,6 +240,7 @@
           if (d.id === currentUser.uid) return; // don't list yourself
           const data = d.data();
           if (data.settings?.isPrivate) return; // private accounts stay out of Explore
+          if (myBlocked.includes(d.id)) return; // hide users you've blocked
           allPeople.push({ uid: d.id, ...data });
         });
         applyFilter();
