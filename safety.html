@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Safety Center</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    .sf-top { justify-content: flex-start; gap: 12px; }
+    .sf-top a { font-size: 18px; color: var(--text-secondary); }
+    .sf-top span { font-size: 16px; font-weight: 700; }
+
+    .sf-body { padding: 16px; max-width: 560px; margin: 0 auto calc(24px + var(--safe-bottom)); }
+
+    .sf-section-title {
+      font-size: 12.5px; font-weight: 700; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.04em;
+      margin: 22px 0 10px;
+    }
+    .sf-section-title:first-child { margin-top: 4px; }
+    .sf-hint { font-size: 12.5px; color: var(--text-muted); margin: -4px 0 12px; line-height: 1.5; }
+
+    .sf-card { padding: 4px; }
+    .sf-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .sf-row:last-child { border-bottom: none; }
+
+    .sf-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--grad-brand);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; flex: 0 0 auto; overflow: hidden;
+    }
+    .sf-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .sf-name { font-size: 14px; font-weight: 600; flex: 1; }
+
+    .sf-unblock {
+      height: 32px; padding: 0 14px; border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.05); border: 1px solid var(--line-strong);
+      color: var(--text-secondary); font-size: 12px; font-weight: 700;
+    }
+
+    .sf-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0; }
+
+    /* Report form */
+    .sf-form .field { margin-bottom: 12px; }
+    .sf-form label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .sf-form input, .sf-form select, .sf-form textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 14px;
+      padding: 12px 14px;
+      font-family: inherit;
+      outline: none;
+    }
+    .sf-form textarea { min-height: 80px; resize: vertical; }
+    .sf-form select option { background: var(--bg-surface); }
+
+    /* Emergency-style helper card */
+    .sf-support-card { padding: 16px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 22px; }
+    .sf-support-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(124,58,237,0.15); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+    .sf-support-icon svg { width: 18px; height: 18px; stroke: var(--cyan); }
+    .sf-support-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+    .sf-support-text b { color: var(--text-primary); }
+  </style>
+</head>
+<body>
+  <div class="bg-cosmic"></div>
+
+  <header class="top-bar sf-top">
+    <a href="settings.html" aria-label="Back">←</a>
+    <span>Safety Center</span>
+  </header>
+
+  <main class="page">
+    <div class="sf-body">
+
+      <div class="card sf-support-card">
+        <div class="sf-support-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+        </div>
+        <p class="sf-support-text">
+          <b>You're in control.</b> Blocking someone removes them from your Explore list and hides their pulses
+          from your feed — they won't be notified. Reports go to a private queue for review.
+        </p>
+      </div>
+
+      <div class="sf-section-title">Blocked Users</div>
+      <p class="sf-empty" id="blockedLoading">Loading…</p>
+      <div class="card sf-card" id="blockedCard" style="display:none;">
+        <div id="blockedList"></div>
+      </div>
+      <p class="sf-empty" id="blockedEmpty" style="display:none;">You haven't blocked anyone.</p>
+
+      <div class="sf-section-title">Report Someone or Something</div>
+      <p class="sf-hint">Use their exact GAIVEX username, or the pulse link if you're reporting a specific post.</p>
+      <div class="card" style="padding:16px;">
+        <div class="sf-form">
+          <div class="field">
+            <label for="reportTarget">Username or pulse link</label>
+            <input type="text" id="reportTarget" placeholder="e.g. rakibul_hasan" />
+          </div>
+          <div class="field">
+            <label for="reportReason">Reason</label>
+            <select id="reportReason">
+              <option value="harassment">Harassment or bullying</option>
+              <option value="spam">Spam or scam</option>
+              <option value="hate">Hate speech</option>
+              <option value="impersonation">Impersonation</option>
+              <option value="nudity">Nudity or sexual content</option>
+              <option value="violence">Violence or dangerous content</option>
+              <option value="other">Something else</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="reportDetails">Details (optional)</label>
+            <textarea id="reportDetails" placeholder="Add any context that will help our review…" maxlength="500"></textarea>
+          </div>
+          <button type="button" class="btn btn-primary btn-block" id="submitReport">Submit Report</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      db,
+      doc, getDoc, updateDoc, arrayRemove,
+      collection, addDoc, serverTimestamp,
+    } from './js/firebase-init.js';
+    import { requireAuth, showToast } from './js/app.js';
+
+    let currentUser = null;
+
+    function initialsOf(name) {
+      return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+    function avatarInner(photoURL, name) {
+      return photoURL ? `<img src="${photoURL}" alt="" />` : initialsOf(name);
+    }
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    async function loadBlocked() {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      const blocked = snap.exists() && Array.isArray(snap.data().blocked) ? snap.data().blocked : [];
+
+      document.getElementById('blockedLoading').style.display = 'none';
+
+      if (blocked.length === 0) {
+        document.getElementById('blockedEmpty').style.display = 'block';
+        return;
+      }
+
+      const profiles = await Promise.all(blocked.map(async (uid) => {
+        const s = await getDoc(doc(db, 'users', uid));
+        return { uid, ...(s.exists() ? s.data() : { username: 'GAIVEX user' }) };
+      }));
+
+      const listEl = document.getElementById('blockedList');
+      listEl.innerHTML = '';
+      profiles.forEach((p) => {
+        const row = document.createElement('div');
+        row.className = 'sf-row';
+        row.innerHTML = `
+          <div class="sf-avatar">${avatarInner(p.photoURL, p.username)}</div>
+          <div class="sf-name">${escapeHtml(p.username || 'GAIVEX user')}</div>
+          <button class="sf-unblock" data-uid="${p.uid}">Unblock</button>
+        `;
+        listEl.appendChild(row);
+      });
+      document.getElementById('blockedCard').style.display = 'block';
+    }
+
+    document.getElementById('blockedList')?.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.sf-unblock');
+      if (!btn) return;
+      btn.disabled = true;
+      btn.textContent = '…';
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid), { blocked: arrayRemove(btn.dataset.uid) });
+        btn.closest('.sf-row').remove();
+        showToast('Unblocked');
+      } catch (err) {
+        console.error(err);
+        showToast('Could not unblock. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Unblock';
+      }
+    });
+
+    document.getElementById('submitReport').addEventListener('click', async () => {
+      const target = document.getElementById('reportTarget').value.trim();
+      const reason = document.getElementById('reportReason').value;
+      const details = document.getElementById('reportDetails').value.trim();
+
+      if (!target) {
+        showToast('Please enter a username or pulse link to report.');
+        return;
+      }
+
+      const btn = document.getElementById('submitReport');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+
+      try {
+        await addDoc(collection(db, 'reports'), {
+          reporterUid: currentUser.uid,
+          target,
+          reason,
+          details,
+          status: 'open',
+          createdAt: serverTimestamp(),
+        });
+        document.getElementById('reportTarget').value = '';
+        document.getElementById('reportDetails').value = '';
+        showToast('Report submitted — thank you for keeping GAIVEX safe.');
+      } catch (err) {
+        console.error(err);
+        showToast('Could not submit report. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Report';
+      }
+    });
+
+    (async () => {
+      currentUser = await requireAuth();
+      if (!currentUser) return;
+      await loadBlocked();
+    })();
+  </script>
+</body>
+</html>
