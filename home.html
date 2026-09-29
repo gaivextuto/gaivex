@@ -302,6 +302,16 @@
         </div>
       `;
 
+      article.querySelector('.comment-btn').addEventListener('click', () => {
+        window.location.href = `post-detail.html?id=${id}`;
+      });
+
+      article.addEventListener('click', (e) => {
+        if (e.target.closest('.pulse-actions') || e.target.closest('.pulse-more')) return;
+        window.location.href = `post-detail.html?id=${id}`;
+      });
+      article.style.cursor = 'pointer';
+
       article.querySelector('.like-btn').addEventListener('click', async () => {
         if (!currentUser) return;
         const nowLiked = article.querySelector('.like-btn').classList.contains('liked');
