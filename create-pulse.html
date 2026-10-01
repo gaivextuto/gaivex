@@ -134,11 +134,10 @@
 
   <script type="module">
     import {
-      db, storage,
+      db,
       collection, addDoc, serverTimestamp,
-      storageRef, uploadBytes, getDownloadURL,
     } from './js/firebase-init.js';
-    import { requireAuth, showToast } from './js/app.js';
+    import { requireAuth, showToast, uploadToCloudinary } from './js/app.js';
 
     let currentUser = null;
     let selectedFile = null;
@@ -220,29 +219,15 @@
       els.error.style.display = 'block';
     }
 
-    // Storage uploads can hang (blocked CORS, storage not enabled, etc.) instead of
-    // throwing quickly — race against a timeout so the button never gets stuck forever.
-    function withTimeout(promise, ms, label) {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(
-          () => reject(new Error(`timeout:${label}`)), ms
-        )),
-      ]);
-    }
-
     function friendlyUploadError(err) {
-      const msg = String(err?.message || err?.code || '');
-      if (msg.startsWith('timeout:')) {
-        return "Upload is taking too long — this is usually the browser opening the file directly (file:// address bar). Serve the site over http(s) — e.g. a local server, or your Cloudflare Pages URL — and try again.";
+      const msg = String(err?.message || '');
+      if (msg === 'cloudinary-not-configured') {
+        return 'Media upload is not configured yet (missing Cloudinary cloud name / preset).';
       }
-      if (err?.code === 'storage/unauthorized') {
-        return 'Upload blocked by Storage Rules — check the reels/pulses rules are published.';
+      if (err?.name === 'AbortError') {
+        return 'Upload is taking too long — check your connection and try again.';
       }
-      if (err?.code === 'storage/unknown' || msg.includes('CORS') || msg.includes('Failed to fetch')) {
-        return 'Upload blocked — make sure Firebase Storage is enabled for this project, and that you are viewing the site over http(s), not by opening the file directly.';
-      }
-      return 'Could not upload right now. Please try again.';
+      return msg || 'Could not upload right now. Please try again.';
     }
 
     els.postBtn.addEventListener('click', async () => {
@@ -254,10 +239,7 @@
       try {
         if (selectedIsVideo) {
           // Short video → goes to the "reels" collection and shows up in the Pulse tab.
-          const path = `reels/${currentUser.uid}/${Date.now()}_${selectedFile.name}`;
-          const ref = storageRef(storage, path);
-          await withTimeout(uploadBytes(ref, selectedFile), 45000, 'video-upload');
-          const videoURL = await withTimeout(getDownloadURL(ref), 15000, 'video-url');
+          const videoURL = await uploadToCloudinary(selectedFile, 'gaivex/reels', 90000);
 
           await addDoc(collection(db, 'reels'), {
             uid: currentUser.uid,
@@ -276,10 +258,7 @@
           // Text / photo → goes to the "posts" collection and shows up in the Home feed.
           let mediaURL = '';
           if (selectedFile) {
-            const path = `pulses/${currentUser.uid}/${Date.now()}_${selectedFile.name}`;
-            const ref = storageRef(storage, path);
-            await withTimeout(uploadBytes(ref, selectedFile), 30000, 'image-upload');
-            mediaURL = await withTimeout(getDownloadURL(ref), 15000, 'image-url');
+            mediaURL = await uploadToCloudinary(selectedFile, 'gaivex/pulses', 45000);
           }
 
           await addDoc(collection(db, 'posts'), {
