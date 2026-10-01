@@ -98,10 +98,11 @@
       <article class="pd-post card" id="postCard" style="display:none;">
         <div class="pd-head">
           <div class="pd-avatar" id="postAvatar">?</div>
-          <div>
+          <div style="flex:1;">
             <div class="pd-name" id="postName">…</div>
             <div class="pd-sub" id="postTime"></div>
           </div>
+          <button id="deleteBtn" style="display:none; color:var(--text-muted); font-size:18px;" title="Delete pulse">🗑</button>
         </div>
         <p class="pd-text" id="postText"></p>
         <img class="pd-media" id="postMedia" style="display:none;" alt="" />
@@ -113,6 +114,10 @@
           <button>
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span id="commentCount">0</span>
+          </button>
+          <button id="shareBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/></svg>
+            Share
           </button>
         </div>
       </article>
@@ -133,7 +138,7 @@
   <script type="module">
     import {
       db,
-      doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment,
+      doc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, increment,
       collection, addDoc, query, orderBy, onSnapshot, serverTimestamp,
     } from './js/firebase-init.js';
     import { requireAuth, showToast } from './js/app.js';
@@ -184,7 +189,43 @@
       document.getElementById('likeBtn').classList.toggle('liked', liked);
       document.getElementById('likeCount').textContent = likes.length;
       document.getElementById('commentCount').textContent = post.commentsCount || 0;
+
+      const deleteBtn = document.getElementById('deleteBtn');
+      deleteBtn.style.display = (currentUser && post.uid === currentUser.uid) ? 'block' : 'none';
     }
+
+    document.getElementById('deleteBtn').addEventListener('click', async () => {
+      if (!postId) return;
+      if (!window.confirm('Delete this pulse? This cannot be undone.')) return;
+      try {
+        await deleteDoc(doc(db, 'posts', postId));
+        showToast('Pulse deleted');
+        window.location.href = 'home.html';
+      } catch (err) {
+        console.error(err);
+        showToast('Could not delete. Please try again.');
+      }
+    });
+
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+      const shareUrl = window.location.href;
+      const textEl = document.getElementById('postText');
+      const shareData = {
+        title: 'GAIVEX Pulse',
+        text: textEl.textContent ? textEl.textContent.slice(0, 80) : 'Check out this pulse on GAIVEX',
+        url: shareUrl,
+      };
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast('Link copied to clipboard ✦');
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') console.warn('Share failed:', err);
+      }
+    });
 
     document.getElementById('likeBtn').addEventListener('click', async () => {
       if (!currentUser || !postId) return;
