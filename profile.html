@@ -152,9 +152,9 @@
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg>
       Home
     </a>
-    <a href="explore.html" data-page="explore">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      Explore
+    <a href="pulse.html" data-page="pulse">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none"/></svg>
+      Pulse
     </a>
     <a href="create-pulse.html" class="nav-fab" aria-label="Create pulse">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -171,13 +171,12 @@
 
   <script type="module">
     import {
-      db, storage,
-      doc, getDoc, updateDoc, arrayUnion,
+      db,
+      doc, getDoc, updateDoc, deleteDoc, arrayUnion,
       collection, query, where, orderBy, onSnapshot,
-      storageRef, uploadBytes, getDownloadURL,
       auth, updateProfile,
     } from './js/firebase-init.js';
-    import { requireAuth, setActiveNav, logout, showToast } from './js/app.js';
+    import { requireAuth, setActiveNav, logout, showToast, uploadToCloudinary } from './js/app.js';
 
     setActiveNav('profile');
 
@@ -246,18 +245,45 @@
       return `${Math.floor(hrs / 24)}d ago`;
     }
 
-    function renderPost(post) {
+    function renderPost(id, post, isOwn) {
       const div = document.createElement('article');
       div.className = 'card pf-post';
+      div.style.cursor = 'pointer';
       div.innerHTML = `
-        ${post.text ? `<p>${escapeHtml(post.text)}</p>` : ''}
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+          <div style="flex:1;">
+            ${post.text ? `<p>${escapeHtml(post.text)}</p>` : ''}
+          </div>
+          ${isOwn ? '<button class="pf-post-delete" style="color:var(--text-muted); font-size:16px; flex:0 0 auto;" title="Delete pulse">🗑</button>' : ''}
+        </div>
         ${post.mediaURL ? `<img src="${post.mediaURL}" alt="" />` : ''}
         <div class="pf-post-time">${timeAgo(post.createdAt)}</div>
       `;
+
+      div.addEventListener('click', (e) => {
+        if (e.target.closest('.pf-post-delete')) return;
+        window.location.href = `post-detail.html?id=${id}`;
+      });
+
+      const delBtn = div.querySelector('.pf-post-delete');
+      if (delBtn) {
+        delBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!window.confirm('Delete this pulse? This cannot be undone.')) return;
+          try {
+            await deleteDoc(doc(db, 'posts', id));
+            showToast('Pulse deleted');
+          } catch (err) {
+            console.error(err);
+            showToast('Could not delete. Please try again.');
+          }
+        });
+      }
+
       return div;
     }
 
-    function loadPostsFor(uid) {
+    function loadPostsFor(uid, isOwn) {
       const q = query(collection(db, 'posts'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
       onSnapshot(q, (snap) => {
         els.postsList.innerHTML = '';
@@ -267,8 +293,14 @@
           return;
         }
         els.postsEmpty.style.display = 'none';
-        snap.forEach((d) => els.postsList.appendChild(renderPost(d.data())));
-      }, (err) => console.warn('Could not load posts:', err));
+        snap.forEach((d) => els.postsList.appendChild(renderPost(d.id, d.data(), isOwn)));
+      }, (err) => {
+        console.error('Could not load posts:', err);
+        els.postsEmpty.style.display = 'block';
+        els.postsEmpty.textContent = err.code === 'failed-precondition'
+          ? 'Pulses need a one-time Firestore index — check the browser console (F12) for a "Create Index" link, click it, then reload.'
+          : 'Could not load pulses right now.';
+      });
     }
 
     function renderOwnActions() {
@@ -339,11 +371,11 @@
       blockBtn.textContent = 'Block';
       blockBtn.style.cssText = 'margin-top:10px; font-size:12px; color:var(--text-muted); text-decoration:underline; background:none;';
       blockBtn.addEventListener('click', async () => {
-        if (!window.confirm('Block this user? They will be hidden from your Explore list and feed.')) return;
+        if (!window.confirm('Block this user? They will be hidden from your Search list and feed.')) return;
         try {
           await updateDoc(doc(db, 'users', currentUser.uid), { blocked: arrayUnion(targetUid) });
           showToast('User blocked');
-          window.location.href = 'explore.html';
+          window.location.href = 'search.html';
         } catch (err) {
           console.error(err);
           showToast('Could not block user.');
@@ -386,10 +418,7 @@
 
       els.avatar.classList.add('pf-avatar-uploading');
       try {
-        const path = `avatars/${auth.currentUser.uid}/profile.jpg`;
-        const ref = storageRef(storage, path);
-        await uploadBytes(ref, file);
-        const url = await getDownloadURL(ref);
+        const url = await uploadToCloudinary(file, 'gaivex/avatars', 30000);
 
         await updateDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: url });
         await updateProfile(auth.currentUser, { photoURL: url });
@@ -398,7 +427,7 @@
         showToast('Profile picture updated ✦');
       } catch (err) {
         console.error(err);
-        showToast('Could not upload photo. Please try again.');
+        showToast(err?.message || 'Could not upload photo. Please try again.');
       } finally {
         els.avatar.classList.remove('pf-avatar-uploading');
         els.avatarFile.value = '';
@@ -451,12 +480,12 @@
           lock.innerHTML = '🔒 This account is private.<br>Add them as a friend to see their pulses.';
           els.postsList.parentElement.insertBefore(lock, els.postsList.nextSibling);
         } else {
-          loadPostsFor(targetUid);
+          loadPostsFor(targetUid, isOwn);
         }
       } catch (err) {
         console.error(err);
         showToast('Could not load this profile.');
-        loadPostsFor(targetUid);
+        loadPostsFor(targetUid, isOwn);
       }
     })();
   </script>
