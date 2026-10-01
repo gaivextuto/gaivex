@@ -122,3 +122,54 @@ export function showToast(message, duration = 2600) {
 }
 
 export { ONBOARDING_KEY, AUTH_PAGE, HOME_PAGE, ONBOARDING_PAGE };
+
+/* =====================================================================
+   MEDIA UPLOAD (Cloudinary)
+   Firebase Storage now requires a Blaze (billing) plan even for free
+   usage, so GAIVEX uploads images/videos to Cloudinary's free tier
+   instead (no card required). Firebase Auth + Firestore are untouched.
+
+   SETUP (one-time, ~5 minutes):
+   1. Create a free account at https://cloudinary.com
+   2. Copy your "Cloud Name" from the dashboard, paste it below.
+   3. Settings → Upload → Upload presets → Add upload preset →
+      Signing Mode = "Unsigned" → Save. Paste the preset name below.
+   ===================================================================== */
+
+const CLOUDINARY_CLOUD_NAME = 'zcr4hgzf';
+const CLOUDINARY_UPLOAD_PRESET = 'gsukipso';
+
+/**
+ * Uploads a File to Cloudinary and resolves with its public https URL.
+ * @param {File} file
+ * @param {string} folder - e.g. 'gaivex/avatars', 'gaivex/pulses', 'gaivex/reels'
+ * @param {number} timeoutMs
+ */
+export async function uploadToCloudinary(file, folder = 'gaivex', timeoutMs = 45000) {
+  if (CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUD_NAME') {
+    throw new Error('cloudinary-not-configured');
+  }
+
+  const resourceType = file.type.startsWith('video/') ? 'video' : 'image';
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', folder);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(url, { method: 'POST', body: formData, signal: controller.signal });
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody?.error?.message || `Upload failed (${res.status})`);
+    }
+    const data = await res.json();
+    return data.secure_url;
+  } finally {
+    clearTimeout(timer);
+  }
+}
