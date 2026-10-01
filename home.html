@@ -232,9 +232,9 @@
     import {
       doc, getDoc, db,
       collection, query, orderBy, limit, onSnapshot,
-      updateDoc, arrayUnion, arrayRemove,
+      updateDoc, arrayUnion, arrayRemove, deleteDoc,
     } from './js/firebase-init.js';
-    import { requireAuth, setActiveNav } from './js/app.js';
+    import { requireAuth, setActiveNav, showToast } from './js/app.js';
 
     setActiveNav('home');
 
@@ -282,7 +282,7 @@
             <div class="pulse-name">${escapeHtml(post.authorName || 'GAIVEX user')}</div>
             <div class="pulse-sub">${timeAgo(post.createdAt)}</div>
           </div>
-          <button class="pulse-more">⋯</button>
+          ${currentUser && post.uid === currentUser.uid ? '<button class="pulse-more" title="Delete pulse">🗑</button>' : ''}
         </div>
         ${post.text ? `<p class="pulse-body">${escapeHtml(post.text)}</p>` : ''}
         ${post.mediaURL ? `<img class="pulse-media" style="object-fit:cover;" src="${post.mediaURL}" alt="" />` : ''}
@@ -321,6 +321,43 @@
           });
         } catch (err) {
           console.warn('Could not update like:', err);
+        }
+      });
+
+      const moreBtn = article.querySelector('.pulse-more');
+      if (moreBtn) {
+        moreBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!window.confirm('Delete this pulse? This cannot be undone.')) return;
+          try {
+            await deleteDoc(doc(db, 'posts', id));
+            showToast('Pulse deleted');
+          } catch (err) {
+            console.error(err);
+            showToast('Could not delete. Please try again.');
+          }
+        });
+      }
+
+      article.querySelector('.share-btn').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const shareUrl = `${window.location.origin}${window.location.pathname.replace('home.html', '')}post-detail.html?id=${id}`;
+        const shareData = {
+          title: 'GAIVEX Pulse',
+          text: post.text ? post.text.slice(0, 80) : 'Check out this pulse on GAIVEX',
+          url: shareUrl,
+        };
+        try {
+          if (navigator.share) {
+            await navigator.share(shareData);
+          } else {
+            await navigator.clipboard.writeText(shareUrl);
+            showToast('Link copied to clipboard ✦');
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.warn('Share failed:', err);
+          }
         }
       });
 
