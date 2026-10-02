@@ -38,6 +38,7 @@ import {
   serverTimestamp,
   arrayUnion,
   arrayRemove,
+  increment,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import {
   getStorage,
@@ -87,6 +88,7 @@ export {
   serverTimestamp,
   arrayUnion,
   arrayRemove,
+  increment,
   storageRef,
   uploadBytes,
   getDownloadURL,
