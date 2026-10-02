@@ -13,6 +13,18 @@
   <link rel="stylesheet" href="css/style.css" />
 
   <style>
+    /* কপি করা ব্লক করার জন্য CSS */
+    .no-select {
+      -webkit-user-select: none; /* Safari */
+      -moz-user-select: none;    /* Firefox */
+      -ms-user-select: none;     /* IE / Edge */
+      user-select: none;        /* Standard */
+    }
+    
+    .pulse-media {
+      pointer-events: none; /* ছবিতে রাইট ক্লিক বা ড্র্যাগ করে সেভ করা বন্ধ করতে */
+    }
+
     .top-bar .brand-logo { font-size: 19px; }
     .top-actions { display: flex; align-items: center; gap: 14px; }
     .icon-btn {
@@ -160,7 +172,7 @@
     }
   </style>
 </head>
-<body>
+<body class="no-select">
   <div class="bg-cosmic"></div>
 
   <header class="top-bar">
@@ -187,7 +199,6 @@
           <div class="story-ring"><div class="story-avatar" id="myAvatar">＋</div></div>
           <span class="story-name">Your Space</span>
         </a>
-        <!-- Populated at runtime from real recent post authors -->
       </div>
 
       <a href="create-pulse.html" class="composer card">
@@ -196,7 +207,7 @@
       </a>
 
       <div class="feed" id="feed">
-        <!-- Real posts render here from Firestore -->
+        <!-- Feed Content -->
       </div>
 
       <p class="empty-hint" id="emptyHint" style="display:none;">
@@ -237,6 +248,10 @@
     import { requireAuth, setActiveNav, showToast } from './js/app.js';
 
     setActiveNav('home');
+
+    // কপি এবং রাইট-ক্লিক পুরোপুরি ডিজেবল করার ইভেন্ট
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.addEventListener('copy', (e) => e.preventDefault());
 
     const feedEl = document.getElementById('feed');
     const emptyHint = document.getElementById('emptyHint');
@@ -285,7 +300,7 @@
           ${currentUser && post.uid === currentUser.uid ? '<button class="pulse-more" title="Delete pulse">🗑</button>' : ''}
         </div>
         ${post.text ? `<p class="pulse-body">${escapeHtml(post.text)}</p>` : ''}
-        ${post.mediaURL ? `<img class="pulse-media" style="object-fit:cover;" src="${post.mediaURL}" alt="" />` : ''}
+        ${post.mediaURL ? `<img class="pulse-media" style="object-fit:cover;" src="${post.mediaURL}" alt="" draggable="false" />` : ''}
         <div class="pulse-actions">
           <button class="like-btn ${liked ? 'liked' : ''}">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
@@ -302,17 +317,15 @@
         </div>
       `;
 
-      article.querySelector('.comment-btn').addEventListener('click', () => {
+      // শুধুমাত্র কমেন্ট বাটনে ক্লিক করলেই কমেন্ট পেজে যাবে
+      article.querySelector('.comment-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
         window.location.href = `post-detail.html?id=${id}`;
       });
 
-      article.addEventListener('click', (e) => {
-        if (e.target.closest('.pulse-actions') || e.target.closest('.pulse-more')) return;
-        window.location.href = `post-detail.html?id=${id}`;
-      });
-      article.style.cursor = 'pointer';
-
-      article.querySelector('.like-btn').addEventListener('click', async () => {
+      // লাইক অ্যাকশন
+      article.querySelector('.like-btn').addEventListener('click', async (e) => {
+        e.stopPropagation();
         if (!currentUser) return;
         const nowLiked = article.querySelector('.like-btn').classList.contains('liked');
         try {
@@ -324,6 +337,7 @@
         }
       });
 
+      // ডিলিট অপশন
       const moreBtn = article.querySelector('.pulse-more');
       if (moreBtn) {
         moreBtn.addEventListener('click', async (e) => {
@@ -339,6 +353,7 @@
         });
       }
 
+      // শেয়ার বাটন
       article.querySelector('.share-btn').addEventListener('click', async (e) => {
         e.stopPropagation();
         const shareUrl = `${window.location.origin}${window.location.pathname.replace('home.html', '')}post-detail.html?id=${id}`;
@@ -414,7 +429,7 @@
 
     (async () => {
       const user = await requireAuth();
-      if (!user) return; // requireAuth already redirected to auth.html
+      if (!user) return;
       currentUser = user;
 
       document.getElementById('composerAvatar').innerHTML = avatarInner(user.photoURL, user.displayName || user.email);
