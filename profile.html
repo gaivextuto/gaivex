@@ -94,6 +94,7 @@
     .pf-post p { font-size: 13.5px; line-height: 1.5; }
     .pf-post .pf-post-time { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
     .pf-post img { width: 100%; border-radius: var(--radius-sm); margin-top: 10px; max-height: 220px; object-fit: cover; }
+    .pf-post video { width: 100%; border-radius: var(--radius-sm); margin-top: 10px; max-height: 320px; background: #000; }
 
     .pf-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 0; }
   </style>
@@ -144,6 +145,12 @@
       <div class="pf-section-title" id="postsTitle">Pulses</div>
       <div class="pf-posts" id="pfPosts"></div>
       <p class="pf-empty" id="pfEmpty" style="display:none;">No pulses shared yet.</p>
+
+      <div class="pf-section-title" id="videosTitle">Videos</div>
+      <div class="pf-posts" id="pfVideos"></div>
+      <p class="pf-empty" id="pfVideosEmpty" style="display:none;">No videos shared yet.</p>
+
+      <div id="pfLockedWrap"></div>
     </div>
   </main>
 
@@ -204,7 +211,17 @@
       postsTitle: document.getElementById('postsTitle'),
       postsList: document.getElementById('pfPosts'),
       postsEmpty: document.getElementById('pfEmpty'),
+      videosTitle: document.getElementById('videosTitle'),
+      videosList: document.getElementById('pfVideos'),
+      videosEmpty: document.getElementById('pfVideosEmpty'),
+      lockedWrap: document.getElementById('pfLockedWrap'),
     };
+
+    let postsCount = 0;
+    let videosCount = 0;
+    function updateStat() {
+      els.statPosts.textContent = postsCount + videosCount;
+    }
 
     function initialsOf(name) {
       return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -245,6 +262,7 @@
       return `${Math.floor(hrs / 24)}d ago`;
     }
 
+    // ---------- Posts (text / photo) ----------
     function renderPost(id, post, isOwn) {
       const div = document.createElement('article');
       div.className = 'card pf-post';
@@ -287,8 +305,10 @@
       const q = query(collection(db, 'posts'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
       onSnapshot(q, (snap) => {
         els.postsList.innerHTML = '';
-        els.statPosts.textContent = snap.size;
+        postsCount = snap.size;
+        updateStat();
         if (snap.empty) {
+          els.postsEmpty.textContent = 'No pulses shared yet.';
           els.postsEmpty.style.display = 'block';
           return;
         }
@@ -300,6 +320,59 @@
         els.postsEmpty.textContent = err.code === 'failed-precondition'
           ? 'Pulses need a one-time Firestore index — check the browser console (F12) for a "Create Index" link, click it, then reload.'
           : 'Could not load pulses right now.';
+      });
+    }
+
+    // ---------- Videos (reels) ----------
+    function renderVideo(id, reel, isOwn) {
+      const div = document.createElement('article');
+      div.className = 'card pf-post';
+      div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+          <div style="flex:1;">
+            ${reel.caption ? `<p>${escapeHtml(reel.caption)}</p>` : ''}
+          </div>
+          ${isOwn ? '<button class="pf-video-delete" style="color:var(--text-muted); font-size:16px; flex:0 0 auto;" title="Delete video">🗑</button>' : ''}
+        </div>
+        <video src="${reel.videoURL}" controls playsinline preload="metadata"></video>
+        <div class="pf-post-time">${timeAgo(reel.createdAt)}</div>
+      `;
+
+      const delBtn = div.querySelector('.pf-video-delete');
+      if (delBtn) {
+        delBtn.addEventListener('click', async () => {
+          if (!window.confirm('Delete this video? This cannot be undone.')) return;
+          try {
+            await deleteDoc(doc(db, 'reels', id));
+            showToast('Video deleted');
+          } catch (err) {
+            console.error(err);
+            showToast('Could not delete. Please try again.');
+          }
+        });
+      }
+      return div;
+    }
+
+    function loadVideosFor(uid, isOwn) {
+      const q = query(collection(db, 'reels'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
+      onSnapshot(q, (snap) => {
+        els.videosList.innerHTML = '';
+        videosCount = snap.size;
+        updateStat();
+        if (snap.empty) {
+          els.videosEmpty.textContent = 'No videos shared yet.';
+          els.videosEmpty.style.display = 'block';
+          return;
+        }
+        els.videosEmpty.style.display = 'none';
+        snap.forEach((d) => els.videosList.appendChild(renderVideo(d.id, d.data(), isOwn)));
+      }, (err) => {
+        console.error('Could not load videos:', err);
+        els.videosEmpty.style.display = 'block';
+        els.videosEmpty.textContent = err.code === 'failed-precondition'
+          ? 'Videos need a one-time Firestore index — check the browser console (F12) for a "Create Index" link, click it, then reload.'
+          : 'Could not load videos right now.';
       });
     }
 
@@ -389,7 +462,6 @@
     });
 
     els.bioSave.addEventListener('click', async () => {
-      const uid = viewedUid || els.bioSave.dataset.uid;
       const newBio = els.bioInput.value.trim();
       els.bioSave.disabled = true;
       try {
@@ -445,6 +517,7 @@
       els.logoutBtn.style.display = isOwn ? 'block' : 'none';
       els.settingsLink.style.display = isOwn ? 'inline' : 'none';
       els.postsTitle.textContent = isOwn ? 'My Pulses' : 'Pulses';
+      els.videosTitle.textContent = isOwn ? 'My Videos' : 'Videos';
       els.bioSave.dataset.uid = targetUid;
 
       try {
@@ -473,19 +546,22 @@
         const isLocked = !isOwn && !!profile.settings?.isPrivate && !isFriend;
 
         if (isLocked) {
+          els.postsTitle.style.display = 'none';
+          els.videosTitle.style.display = 'none';
           els.postsList.innerHTML = '';
+          els.videosList.innerHTML = '';
           els.postsEmpty.style.display = 'none';
-          const lock = document.createElement('div');
-          lock.className = 'pf-empty';
-          lock.innerHTML = '🔒 This account is private.<br>Add them as a friend to see their pulses.';
-          els.postsList.parentElement.insertBefore(lock, els.postsList.nextSibling);
+          els.videosEmpty.style.display = 'none';
+          els.lockedWrap.innerHTML = '<div class="pf-empty">🔒 This account is private.<br>Add them as a friend to see their pulses.</div>';
         } else {
           loadPostsFor(targetUid, isOwn);
+          loadVideosFor(targetUid, isOwn);
         }
       } catch (err) {
         console.error(err);
         showToast('Could not load this profile.');
         loadPostsFor(targetUid, isOwn);
+        loadVideosFor(targetUid, isOwn);
       }
     })();
   </script>
