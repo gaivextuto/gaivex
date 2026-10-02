@@ -50,53 +50,97 @@
     .pf-handle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
     .pf-bio { margin-top: 10px; font-size: 13.5px; color: var(--text-secondary); max-width: 320px; line-height: 1.5; }
 
-    .pf-stats {
-      display: flex; justify-content: center; gap: 28px;
-      margin: 18px 0 16px;
-    }
+    .pf-stats { display: flex; justify-content: center; gap: 28px; margin: 18px 0 16px; }
     .pf-stat { text-align: center; }
     .pf-stat b { display: block; font-size: 16px; font-weight: 700; }
     .pf-stat span { font-size: 11.5px; color: var(--text-muted); }
 
     .pf-actions { display: flex; gap: 10px; width: 100%; max-width: 320px; }
 
-    .pf-bio-edit {
-      display: none;
-      width: 100%;
-      margin-top: 10px;
-    }
+    .pf-bio-edit { display: none; width: 100%; margin-top: 10px; }
     .pf-bio-edit textarea {
-      width: 100%;
-      min-height: 64px;
+      width: 100%; min-height: 64px;
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--line-soft);
       border-radius: var(--radius-md);
       color: var(--text-primary);
-      font-size: 13.5px;
-      padding: 10px 12px;
-      font-family: inherit;
-      resize: vertical;
-      outline: none;
+      font-size: 13.5px; padding: 10px 12px;
+      font-family: inherit; resize: vertical; outline: none;
     }
     .pf-bio-edit .row { display: flex; gap: 8px; margin-top: 8px; justify-content: center; }
-    .pf-bio-edit .row button {
-      height: 34px; padding: 0 16px; border-radius: var(--radius-pill); font-size: 12.5px; font-weight: 600;
+    .pf-bio-edit .row button { height: 34px; padding: 0 16px; border-radius: var(--radius-pill); font-size: 12.5px; font-weight: 600; }
+
+    /* Tabs */
+    .pf-tabs {
+      display: flex; margin-top: 24px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .pf-tab {
+      flex: 1; padding: 12px 0; text-align: center;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.03em;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .pf-tab.active { color: var(--text-primary); border-bottom-color: var(--cyan); }
+
+    /* Grid */
+    .pf-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      margin-top: 3px;
+    }
+    .pf-tile {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border-radius: 6px;
+      background: var(--bg-surface);
+      cursor: pointer;
+    }
+    .pf-tile img, .pf-tile video {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      pointer-events: none;
+    }
+    .pf-tile .pf-text-tile {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      padding: 8px; text-align: center;
+      font-size: 12px; line-height: 1.35; color: #fff;
+      background: linear-gradient(135deg, rgba(99,102,241,0.55), rgba(236,72,153,0.4));
+      overflow: hidden; word-break: break-word;
+      display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical;
+      align-content: center;
+    }
+    .pf-tile .pf-badge {
+      position: absolute; top: 6px; left: 6px;
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.5); border-radius: 50%;
+    }
+    .pf-tile .pf-badge svg { width: 11px; height: 11px; fill: #fff; stroke: none; }
+    .pf-tile .pf-del {
+      position: absolute; top: 5px; right: 5px; z-index: 2;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(0,0,0,0.55); color: #fff; font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
     }
 
-    .pf-section-title {
-      font-size: 13px; font-weight: 700; color: var(--text-secondary);
-      text-transform: uppercase; letter-spacing: 0.04em;
-      margin: 28px 0 12px;
+    .pf-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 28px 8px; grid-column: 1 / -1; }
+
+    /* Video viewer */
+    .pf-viewer {
+      position: fixed; inset: 0; z-index: 80; background: #000;
+      display: none; flex-direction: column;
     }
-
-    .pf-posts { display: flex; flex-direction: column; gap: 14px; }
-    .pf-post { padding: 14px; }
-    .pf-post p { font-size: 13.5px; line-height: 1.5; }
-    .pf-post .pf-post-time { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
-    .pf-post img { width: 100%; border-radius: var(--radius-sm); margin-top: 10px; max-height: 220px; object-fit: cover; }
-    .pf-post video { width: 100%; border-radius: var(--radius-sm); margin-top: 10px; max-height: 320px; background: #000; }
-
-    .pf-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 0; }
+    .pf-viewer.show { display: flex; }
+    .pf-viewer-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: calc(12px + var(--safe-top)) 16px 12px; color: #fff; font-size: 20px;
+    }
+    .pf-viewer-bar button { color: #fff; font-size: 20px; padding: 4px 8px; }
+    .pf-viewer video { flex: 1; width: 100%; min-height: 0; background: #000; }
+    .pf-viewer-cap { padding: 12px 16px calc(16px + var(--safe-bottom)); color: #fff; font-size: 13.5px; line-height: 1.45; }
   </style>
 </head>
 <body>
@@ -142,17 +186,28 @@
         </div>
       </div>
 
-      <div class="pf-section-title" id="postsTitle">Pulses</div>
-      <div class="pf-posts" id="pfPosts"></div>
-      <p class="pf-empty" id="pfEmpty" style="display:none;">No pulses shared yet.</p>
+      <div id="pfContent">
+        <div class="pf-tabs">
+          <button type="button" class="pf-tab active" id="tabPosts">PULSES</button>
+          <button type="button" class="pf-tab" id="tabVideos">VIDEOS</button>
+        </div>
 
-      <div class="pf-section-title" id="videosTitle">Videos</div>
-      <div class="pf-posts" id="pfVideos"></div>
-      <p class="pf-empty" id="pfVideosEmpty" style="display:none;">No videos shared yet.</p>
+        <div class="pf-grid" id="pfPosts"></div>
+        <div class="pf-grid" id="pfVideos" style="display:none;"></div>
+      </div>
 
       <div id="pfLockedWrap"></div>
     </div>
   </main>
+
+  <div class="pf-viewer" id="viewer">
+    <div class="pf-viewer-bar">
+      <button type="button" id="viewerClose" aria-label="Close">←</button>
+      <button type="button" id="viewerDelete" style="display:none;" aria-label="Delete">🗑</button>
+    </div>
+    <video id="viewerVideo" controls playsinline></video>
+    <div class="pf-viewer-cap" id="viewerCap"></div>
+  </div>
 
   <nav class="bottom-nav">
     <a href="home.html" data-page="home">
@@ -190,38 +245,38 @@
     const params = new URLSearchParams(window.location.search);
     const viewedUid = params.get('uid'); // null => viewing your own profile
 
+    const $ = (id) => document.getElementById(id);
     const els = {
-      back: document.getElementById('backBtn'),
-      logoutBtn: document.getElementById('logoutBtn'),
-      settingsLink: document.getElementById('settingsLink'),
-      avatar: document.getElementById('pfAvatar'),
-      avatarText: document.getElementById('pfAvatarText'),
-      avatarFile: document.getElementById('avatarFile'),
-      name: document.getElementById('pfName'),
-      handle: document.getElementById('pfHandle'),
-      bio: document.getElementById('pfBio'),
-      statPosts: document.getElementById('statPosts'),
-      statFriends: document.getElementById('statFriends'),
-      statFollowers: document.getElementById('statFollowers'),
-      actions: document.getElementById('pfActions'),
-      bioEditWrap: document.getElementById('bioEditWrap'),
-      bioInput: document.getElementById('bioInput'),
-      bioCancel: document.getElementById('bioCancel'),
-      bioSave: document.getElementById('bioSave'),
-      postsTitle: document.getElementById('postsTitle'),
-      postsList: document.getElementById('pfPosts'),
-      postsEmpty: document.getElementById('pfEmpty'),
-      videosTitle: document.getElementById('videosTitle'),
-      videosList: document.getElementById('pfVideos'),
-      videosEmpty: document.getElementById('pfVideosEmpty'),
-      lockedWrap: document.getElementById('pfLockedWrap'),
+      back: $('backBtn'), logoutBtn: $('logoutBtn'), settingsLink: $('settingsLink'),
+      avatar: $('pfAvatar'), avatarText: $('pfAvatarText'), avatarFile: $('avatarFile'),
+      name: $('pfName'), handle: $('pfHandle'), bio: $('pfBio'),
+      statPosts: $('statPosts'), statFriends: $('statFriends'), statFollowers: $('statFollowers'),
+      actions: $('pfActions'),
+      bioEditWrap: $('bioEditWrap'), bioInput: $('bioInput'), bioCancel: $('bioCancel'), bioSave: $('bioSave'),
+      content: $('pfContent'), lockedWrap: $('pfLockedWrap'),
+      tabPosts: $('tabPosts'), tabVideos: $('tabVideos'),
+      postsGrid: $('pfPosts'), videosGrid: $('pfVideos'),
+      viewer: $('viewer'), viewerVideo: $('viewerVideo'), viewerCap: $('viewerCap'),
+      viewerClose: $('viewerClose'), viewerDelete: $('viewerDelete'),
     };
 
     let postsCount = 0;
     let videosCount = 0;
     function updateStat() {
       els.statPosts.textContent = postsCount + videosCount;
+      els.tabPosts.textContent = `PULSES (${postsCount})`;
+      els.tabVideos.textContent = `VIDEOS (${videosCount})`;
     }
+
+    function showTab(which) {
+      const isPosts = which === 'posts';
+      els.tabPosts.classList.toggle('active', isPosts);
+      els.tabVideos.classList.toggle('active', !isPosts);
+      els.postsGrid.style.display = isPosts ? 'grid' : 'none';
+      els.videosGrid.style.display = isPosts ? 'none' : 'grid';
+    }
+    els.tabPosts.addEventListener('click', () => showTab('posts'));
+    els.tabVideos.addEventListener('click', () => showTab('videos'));
 
     function initialsOf(name) {
       return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -252,40 +307,33 @@
       return div.innerHTML;
     }
 
-    function timeAgo(ts) {
-      if (!ts || !ts.toDate) return '';
-      const mins = Math.floor((Date.now() - ts.toDate().getTime()) / 60000);
-      if (mins < 1) return 'just now';
-      if (mins < 60) return `${mins}m ago`;
-      const hrs = Math.floor(mins / 60);
-      if (hrs < 24) return `${hrs}h ago`;
-      return `${Math.floor(hrs / 24)}d ago`;
+    function setEmpty(grid, msg) {
+      grid.innerHTML = `<p class="pf-empty">${msg}</p>`;
+    }
+
+    function indexMsg(err, what) {
+      return err.code === 'failed-precondition'
+        ? `${what} need a one-time Firestore index — check the browser console (F12) for a "Create Index" link, click it, then reload.`
+        : `Could not load ${what.toLowerCase()} right now.`;
     }
 
     // ---------- Posts (text / photo) ----------
-    function renderPost(id, post, isOwn) {
-      const div = document.createElement('article');
-      div.className = 'card pf-post';
-      div.style.cursor = 'pointer';
-      div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-          <div style="flex:1;">
-            ${post.text ? `<p>${escapeHtml(post.text)}</p>` : ''}
-          </div>
-          ${isOwn ? '<button class="pf-post-delete" style="color:var(--text-muted); font-size:16px; flex:0 0 auto;" title="Delete pulse">🗑</button>' : ''}
-        </div>
-        ${post.mediaURL ? `<img src="${post.mediaURL}" alt="" />` : ''}
-        <div class="pf-post-time">${timeAgo(post.createdAt)}</div>
-      `;
+    function renderPostTile(id, post, isOwn) {
+      const tile = document.createElement('div');
+      tile.className = 'pf-tile';
+      tile.innerHTML = post.mediaURL
+        ? `<img src="${post.mediaURL}" alt="" loading="lazy" />`
+        : `<div class="pf-text-tile">${escapeHtml(post.text)}</div>`;
+      if (isOwn) tile.insertAdjacentHTML('beforeend', '<button type="button" class="pf-del" title="Delete">🗑</button>');
 
-      div.addEventListener('click', (e) => {
-        if (e.target.closest('.pf-post-delete')) return;
+      tile.addEventListener('click', (e) => {
+        if (e.target.closest('.pf-del')) return;
         window.location.href = `post-detail.html?id=${id}`;
       });
 
-      const delBtn = div.querySelector('.pf-post-delete');
-      if (delBtn) {
-        delBtn.addEventListener('click', async (e) => {
+      const del = tile.querySelector('.pf-del');
+      if (del) {
+        del.addEventListener('click', async (e) => {
           e.stopPropagation();
           if (!window.confirm('Delete this pulse? This cannot be undone.')) return;
           try {
@@ -297,50 +345,73 @@
           }
         });
       }
-
-      return div;
+      return tile;
     }
 
     function loadPostsFor(uid, isOwn) {
       const q = query(collection(db, 'posts'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
       onSnapshot(q, (snap) => {
-        els.postsList.innerHTML = '';
         postsCount = snap.size;
         updateStat();
-        if (snap.empty) {
-          els.postsEmpty.textContent = 'No pulses shared yet.';
-          els.postsEmpty.style.display = 'block';
-          return;
-        }
-        els.postsEmpty.style.display = 'none';
-        snap.forEach((d) => els.postsList.appendChild(renderPost(d.id, d.data(), isOwn)));
+        els.postsGrid.innerHTML = '';
+        if (snap.empty) { setEmpty(els.postsGrid, 'No pulses shared yet.'); return; }
+        snap.forEach((d) => els.postsGrid.appendChild(renderPostTile(d.id, d.data(), isOwn)));
       }, (err) => {
         console.error('Could not load posts:', err);
-        els.postsEmpty.style.display = 'block';
-        els.postsEmpty.textContent = err.code === 'failed-precondition'
-          ? 'Pulses need a one-time Firestore index — check the browser console (F12) for a "Create Index" link, click it, then reload.'
-          : 'Could not load pulses right now.';
+        setEmpty(els.postsGrid, indexMsg(err, 'Pulses'));
       });
     }
 
     // ---------- Videos (reels) ----------
-    function renderVideo(id, reel, isOwn) {
-      const div = document.createElement('article');
-      div.className = 'card pf-post';
-      div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-          <div style="flex:1;">
-            ${reel.caption ? `<p>${escapeHtml(reel.caption)}</p>` : ''}
-          </div>
-          ${isOwn ? '<button class="pf-video-delete" style="color:var(--text-muted); font-size:16px; flex:0 0 auto;" title="Delete video">🗑</button>' : ''}
-        </div>
-        <video src="${reel.videoURL}" controls playsinline preload="metadata"></video>
-        <div class="pf-post-time">${timeAgo(reel.createdAt)}</div>
+    let openVideoId = null;
+
+    function openViewer(id, reel, isOwn) {
+      openVideoId = id;
+      els.viewerVideo.src = reel.videoURL;
+      els.viewerCap.textContent = reel.caption || '';
+      els.viewerDelete.style.display = isOwn ? 'block' : 'none';
+      els.viewer.classList.add('show');
+      els.viewerVideo.play().catch(() => {});
+    }
+    function closeViewer() {
+      els.viewerVideo.pause();
+      els.viewerVideo.removeAttribute('src');
+      els.viewerVideo.load();
+      els.viewer.classList.remove('show');
+      openVideoId = null;
+    }
+    els.viewerClose.addEventListener('click', closeViewer);
+    els.viewerDelete.addEventListener('click', async () => {
+      if (!openVideoId) return;
+      if (!window.confirm('Delete this video? This cannot be undone.')) return;
+      try {
+        await deleteDoc(doc(db, 'reels', openVideoId));
+        showToast('Video deleted');
+        closeViewer();
+      } catch (err) {
+        console.error(err);
+        showToast('Could not delete. Please try again.');
+      }
+    });
+
+    function renderVideoTile(id, reel, isOwn) {
+      const tile = document.createElement('div');
+      tile.className = 'pf-tile';
+      tile.innerHTML = `
+        <video src="${reel.videoURL}#t=0.1" preload="metadata" muted playsinline></video>
+        <span class="pf-badge"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+        ${isOwn ? '<button type="button" class="pf-del" title="Delete">🗑</button>' : ''}
       `;
 
-      const delBtn = div.querySelector('.pf-video-delete');
-      if (delBtn) {
-        delBtn.addEventListener('click', async () => {
+      tile.addEventListener('click', (e) => {
+        if (e.target.closest('.pf-del')) return;
+        openViewer(id, reel, isOwn);
+      });
+
+      const del = tile.querySelector('.pf-del');
+      if (del) {
+        del.addEventListener('click', async (e) => {
+          e.stopPropagation();
           if (!window.confirm('Delete this video? This cannot be undone.')) return;
           try {
             await deleteDoc(doc(db, 'reels', id));
@@ -351,36 +422,29 @@
           }
         });
       }
-      return div;
+      return tile;
     }
 
     function loadVideosFor(uid, isOwn) {
       const q = query(collection(db, 'reels'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
       onSnapshot(q, (snap) => {
-        els.videosList.innerHTML = '';
         videosCount = snap.size;
         updateStat();
-        if (snap.empty) {
-          els.videosEmpty.textContent = 'No videos shared yet.';
-          els.videosEmpty.style.display = 'block';
-          return;
-        }
-        els.videosEmpty.style.display = 'none';
-        snap.forEach((d) => els.videosList.appendChild(renderVideo(d.id, d.data(), isOwn)));
+        els.videosGrid.innerHTML = '';
+        if (snap.empty) { setEmpty(els.videosGrid, 'No videos shared yet.'); return; }
+        snap.forEach((d) => els.videosGrid.appendChild(renderVideoTile(d.id, d.data(), isOwn)));
       }, (err) => {
         console.error('Could not load videos:', err);
-        els.videosEmpty.style.display = 'block';
-        els.videosEmpty.textContent = err.code === 'failed-precondition'
-          ? 'Videos need a one-time Firestore index — check the browser console (F12) for a "Create Index" link, click it, then reload.'
-          : 'Could not load videos right now.';
+        setEmpty(els.videosGrid, indexMsg(err, 'Videos'));
       });
     }
 
+    // ---------- Actions ----------
     function renderOwnActions() {
       els.actions.innerHTML = `
         <button type="button" class="btn btn-outline btn-block" id="editBioBtn">Edit Bio</button>
       `;
-      document.getElementById('editBioBtn').addEventListener('click', () => {
+      $('editBioBtn').addEventListener('click', () => {
         els.bioEditWrap.style.display = 'block';
         els.bioInput.value = els.bio.textContent.trim();
         els.bioInput.focus();
@@ -388,11 +452,11 @@
     }
 
     async function renderOtherActions(currentUser, targetUid, targetProfile) {
-      const myFriends = Array.isArray(targetProfile.friends) ? targetProfile.friends : [];
+      const theirFriends = Array.isArray(targetProfile.friends) ? targetProfile.friends : [];
       const pendingOnTarget = Array.isArray(targetProfile.friendRequests) ? targetProfile.friendRequests : [];
 
       let state = 'none';
-      if (myFriends.includes(currentUser.uid)) state = 'friends';
+      if (theirFriends.includes(currentUser.uid)) state = 'friends';
       else if (pendingOnTarget.includes(currentUser.uid)) state = 'pending';
 
       const btn = document.createElement('button');
@@ -457,9 +521,7 @@
       els.actions.appendChild(blockBtn);
     }
 
-    els.bioCancel.addEventListener('click', () => {
-      els.bioEditWrap.style.display = 'none';
-    });
+    els.bioCancel.addEventListener('click', () => { els.bioEditWrap.style.display = 'none'; });
 
     els.bioSave.addEventListener('click', async () => {
       const newBio = els.bioInput.value.trim();
@@ -491,10 +553,8 @@
       els.avatar.classList.add('pf-avatar-uploading');
       try {
         const url = await uploadToCloudinary(file, 'gaivex/avatars', 30000);
-
         await updateDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: url });
         await updateProfile(auth.currentUser, { photoURL: url });
-
         setAvatar(url, els.name.textContent);
         showToast('Profile picture updated ✦');
       } catch (err) {
@@ -516,9 +576,8 @@
       els.back.classList.toggle('show', !isOwn);
       els.logoutBtn.style.display = isOwn ? 'block' : 'none';
       els.settingsLink.style.display = isOwn ? 'inline' : 'none';
-      els.postsTitle.textContent = isOwn ? 'My Pulses' : 'Pulses';
-      els.videosTitle.textContent = isOwn ? 'My Videos' : 'Videos';
       els.bioSave.dataset.uid = targetUid;
+      updateStat();
 
       try {
         const snap = await getDoc(doc(db, 'users', targetUid));
@@ -535,24 +594,16 @@
         els.statFriends.textContent = Array.isArray(profile.friends) ? profile.friends.length : 0;
         els.statFollowers.textContent = Array.isArray(profile.followers) ? profile.followers.length : 0;
 
-        if (isOwn) {
-          renderOwnActions();
-        } else {
-          renderOtherActions(currentUser, targetUid, profile);
-        }
+        if (isOwn) renderOwnActions();
+        else renderOtherActions(currentUser, targetUid, profile);
 
         const friends = Array.isArray(profile.friends) ? profile.friends : [];
         const isFriend = friends.includes(currentUser.uid);
         const isLocked = !isOwn && !!profile.settings?.isPrivate && !isFriend;
 
         if (isLocked) {
-          els.postsTitle.style.display = 'none';
-          els.videosTitle.style.display = 'none';
-          els.postsList.innerHTML = '';
-          els.videosList.innerHTML = '';
-          els.postsEmpty.style.display = 'none';
-          els.videosEmpty.style.display = 'none';
-          els.lockedWrap.innerHTML = '<div class="pf-empty">🔒 This account is private.<br>Add them as a friend to see their pulses.</div>';
+          els.content.style.display = 'none';
+          els.lockedWrap.innerHTML = '<div class="pf-empty" style="padding:28px 0;">🔒 This account is private.<br>Add them as a friend to see their pulses.</div>';
         } else {
           loadPostsFor(targetUid, isOwn);
           loadVideosFor(targetUid, isOwn);
