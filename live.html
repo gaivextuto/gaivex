@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Live</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    .lv-top { justify-content: space-between; }
+    .lv-top-left { display: flex; align-items: center; gap: 12px; }
+    .lv-top-left a { font-size: 18px; color: var(--text-secondary); }
+    .lv-top-left span { font-size: 16px; font-weight: 700; }
+    .lv-go-btn {
+      height: 34px; padding: 0 16px; border-radius: var(--radius-pill);
+      background: var(--grad-warm); color: #fff; font-size: 12.5px; font-weight: 700;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ---- List view ---- */
+    .lv-body { padding: 16px; max-width: 560px; margin: 0 auto; }
+    .lv-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 60px 20px; }
+    .lv-grid { display: flex; flex-direction: column; gap: 12px; }
+    .lv-card { padding: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .lv-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--grad-warm);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 17px; flex: 0 0 auto; overflow: hidden;
+      position: relative;
+    }
+    .lv-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .lv-avatar::after {
+      content: "LIVE";
+      position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
+      background: #ef4444; color: #fff; font-size: 8.5px; font-weight: 800;
+      padding: 1.5px 6px; border-radius: 999px; letter-spacing: 0.03em;
+    }
+    .lv-meta { flex: 1; min-width: 0; }
+    .lv-name { font-size: 14px; font-weight: 700; }
+    .lv-title { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+    .lv-viewers { font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+    .lv-viewers svg { width: 12px; height: 12px; stroke: var(--text-muted); }
+
+    /* ---- Broadcast / watch view ---- */
+    html, body { height: 100%; }
+    .lv-stage {
+      display: none;
+      position: fixed; inset: 0; z-index: 40;
+      background: #000;
+      flex-direction: column;
+    }
+    .lv-stage.show { display: flex; }
+    .lv-video-wrap { position: relative; flex: 1; overflow: hidden; background: #000; }
+    .lv-video-wrap video {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .lv-stage-top {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: calc(12px + var(--safe-top)) 16px 30px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%);
+    }
+    .lv-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: #ef4444; color: #fff; font-size: 11px; font-weight: 800;
+      padding: 5px 10px; border-radius: 999px; letter-spacing: 0.03em;
+    }
+    .lv-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse-dot 1.4s infinite; }
+    @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .lv-stage-top .lv-viewer-count {
+      background: rgba(0,0,0,0.5); color: #fff; font-size: 11.5px; font-weight: 600;
+      padding: 5px 10px; border-radius: 999px; display: flex; align-items: center; gap: 5px;
+    }
+    .lv-stage-top .lv-viewer-count svg { width: 13px; height: 13px; stroke: #fff; }
+    .lv-close {
+      background: rgba(0,0,0,0.5); color: #fff; width: 32px; height: 32px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+
+    .lv-status {
+      position: absolute; inset: 0; z-index: 4;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; color: var(--text-secondary); font-size: 13px; text-align: center; padding: 0 30px;
+    }
+
+    .lv-chat {
+      height: 42%;
+      display: flex; flex-direction: column;
+      background: var(--bg-void);
+      border-top: 1px solid var(--line-soft);
+    }
+    .lv-chat-list { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .lv-chat-msg { font-size: 12.5px; line-height: 1.4; }
+    .lv-chat-msg b { color: var(--cyan); font-weight: 700; margin-right: 5px; }
+    .lv-chat-msg span { color: var(--text-primary); }
+    .lv-chat-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px calc(8px + var(--safe-bottom));
+      border-top: 1px solid var(--line-soft);
+    }
+    .lv-chat-bar input {
+      flex: 1; height: 38px; border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.05); border: 1px solid var(--line-soft);
+      color: var(--text-primary); padding: 0 14px; font-size: 13px; outline: none;
+    }
+    .lv-chat-bar button {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--grad-brand); display: flex; align-items: center; justify-content: center;
+    }
+    .lv-chat-bar button svg { width: 15px; height: 15px; stroke: #fff; }
+
+    .lv-end-btn {
+      position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 5;
+      background: #ef4444; color: #fff; font-size: 12.5px; font-weight: 700;
+      padding: 10px 20px; border-radius: 999px;
+    }
+
+    /* Go-live setup sheet */
+    .lv-setup-backdrop {
+      position: fixed; inset: 0; z-index: 55;
+      background: rgba(5,6,15,0.75); display: none; align-items: flex-end;
+    }
+    .lv-setup-backdrop.show { display: flex; }
+    .lv-setup {
+      width: 100%; background: var(--bg-surface); border: 1px solid var(--line-soft);
+      border-radius: 24px 24px 0 0; padding: 20px 20px calc(24px + var(--safe-bottom));
+    }
+    .lv-setup h3 { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+    .lv-setup input {
+      width: 100%; height: 48px; border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.04); border: 1px solid var(--line-soft);
+      color: var(--text-primary); padding: 0 14px; font-size: 14px; outline: none; margin-bottom: 16px;
+    }
+    .lv-setup .row { display: flex; gap: 10px; }
+    .lv-setup .row .btn { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="bg-cosmic"></div>
+
+  <header class="top-bar lv-top">
+    <div class="lv-top-left">
+      <a href="home.html" aria-label="Back">←</a>
+      <span>Live</span>
+    </div>
+    <button type="button" class="lv-go-btn" id="openSetup">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="3"/></svg>
+      Go Live
+    </button>
+  </header>
+
+  <main class="page">
+    <div class="lv-body">
+      <p class="lv-empty" id="loadingHint">Loading live streams…</p>
+      <div class="lv-grid" id="liveGrid"></div>
+      <p class="lv-empty" id="emptyHint" style="display:none;">No one is live right now — be the first to go live!</p>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="home.html" data-page="home">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg>
+      Home
+    </a>
+    <a href="pulse.html" data-page="pulse">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none"/></svg>
+      Pulse
+    </a>
+    <a href="create-pulse.html" class="nav-fab" aria-label="Create pulse">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </a>
+    <a href="spaces.html" data-page="spaces">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Spaces
+    </a>
+    <a href="profile.html" data-page="profile">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </a>
+  </nav>
+
+  <!-- Go-live setup -->
+  <div class="lv-setup-backdrop" id="setupBackdrop">
+    <div class="lv-setup">
+      <h3>Go Live</h3>
+      <input type="text" id="liveTitle" placeholder="What's this stream about?" maxlength="60" />
+      <div class="row">
+        <button type="button" class="btn btn-outline" id="cancelSetup">Cancel</button>
+        <button type="button" class="btn btn-primary" id="startLiveBtn">Start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Broadcast / watch stage -->
+  <div class="lv-stage" id="stage">
+    <div class="lv-video-wrap">
+      <video id="stageVideo" autoplay playsinline muted></video>
+      <div class="lv-status" id="stageStatus"></div>
+      <div class="lv-stage-top">
+        <div class="lv-badge"><span class="dot"></span>LIVE</div>
+        <div class="lv-viewer-count" id="viewerCount">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span id="viewerCountNum">0</span>
+        </div>
+        <button type="button" class="lv-close" id="leaveStage">×</button>
+      </div>
+      <button type="button" class="lv-end-btn" id="endLiveBtn" style="display:none;">End Live</button>
+    </div>
+    <div class="lv-chat">
+      <div class="lv-chat-list" id="chatList"></div>
+      <div class="lv-chat-bar">
+        <input type="text" id="chatInput" placeholder="Say something…" maxlength="200" />
+        <button type="button" id="chatSend">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      db,
+      doc, getDoc, setDoc, updateDoc, deleteDoc,
+      collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, arrayUnion,
+    } from './js/firebase-init.js';
+    import { requireAuth, showToast } from './js/app.js';
+
+    const RTC_CONFIG = {
+      iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }],
+    };
+
+    function initialsOf(name) {
+      return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+    function avatarInner(photoURL, name) {
+      return photoURL ? `<img src="${photoURL}" alt="" />` : initialsOf(name);
+    }
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    let currentUser = null;
+    let role = null; // 'host' | 'viewer' | null
+    let activeStreamId = null;
+    let pc = null;               // host: map of viewerUid -> RTCPeerConnection; viewer: single RTCPeerConnection
+    let hostPCs = {};
+    let localStream = null;
+    let unsubChat = null;
+    let unsubViewers = null;
+    let unsubStreamDoc = null;
+    let unsubMyViewerDoc = null;
+    let addedHostCandidateCount = {};
+    let addedViewerCandidateCount = 0;
+
+    const els = {
+      grid: document.getElementById('liveGrid'),
+      loading: document.getElementById('loadingHint'),
+      empty: document.getElementById('emptyHint'),
+      setupBackdrop: document.getElementById('setupBackdrop'),
+      liveTitle: document.getElementById('liveTitle'),
+      stage: document.getElementById('stage'),
+      stageVideo: document.getElementById('stageVideo'),
+      stageStatus: document.getElementById('stageStatus'),
+      viewerCountNum: document.getElementById('viewerCountNum'),
+      endLiveBtn: document.getElementById('endLiveBtn'),
+      chatList: document.getElementById('chatList'),
+      chatInput: document.getElementById('chatInput'),
+    };
+
+    /* ---------------- Live list ---------------- */
+    function renderListCard(id, s) {
+      const card = document.createElement('div');
+      card.className = 'card lv-card';
+      card.innerHTML = `
+        <div class="lv-avatar">${avatarInner(s.hostPhoto, s.hostName)}</div>
+        <div class="lv-meta">
+          <div class="lv-name">${escapeHtml(s.hostName || 'GAIVEX user')}</div>
+          <div class="lv-title">${escapeHtml(s.title || 'Live now')}</div>
+          <div class="lv-viewers">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            ${s.viewerCount || 0} watching
+          </div>
+        </div>
+      `;
+      card.addEventListener('click', () => joinAsViewer(id, s));
+      return card;
+    }
+
+    function subscribeList() {
+      const q = query(collection(db, 'liveStreams'), orderBy('startedAt', 'desc'));
+      onSnapshot(q, (snap) => {
+        els.loading.style.display = 'none';
+        const active = snap.docs.filter((d) => d.data().active);
+        els.grid.innerHTML = '';
+        if (active.length === 0) {
+          els.empty.style.display = 'block';
+          return;
+        }
+        els.empty.style.display = 'none';
+        active.forEach((d) => els.grid.appendChild(renderListCard(d.id, d.data())));
+      }, (err) => {
+        console.error(err);
+        els.loading.textContent = 'Could not load live streams right now.';
+      });
+    }
+
+    /* ---------------- Chat (shared by host + viewer) ---------------- */
+    function subscribeChat(streamId) {
+      const q = query(collection(db, 'liveStreams', streamId, 'chat'), orderBy('createdAt', 'asc'));
+      if (unsubChat) unsubChat();
+      unsubChat = onSnapshot(q, (snap) => {
+        els.chatList.innerHTML = '';
+        snap.forEach((d) => {
+          const m = d.data();
+          const row = document.createElement('div');
+          row.className = 'lv-chat-msg';
+          row.innerHTML = `<b>${escapeHtml(m.name || 'User')}</b><span>${escapeHtml(m.text)}</span>`;
+          els.chatList.appendChild(row);
+        });
+        els.chatList.scrollTop = els.chatList.scrollHeight;
+      });
+    }
+
+    async function sendChat() {
+      const text = els.chatInput.value.trim();
+      if (!text || !activeStreamId) return;
+      els.chatInput.value = '';
+      try {
+        await addDoc(collection(db, 'liveStreams', activeStreamId, 'chat'), {
+          uid: currentUser.uid,
+          name: currentUser.displayName || currentUser.email.split('@')[0],
+          text,
+          createdAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    document.getElementById('chatSend').addEventListener('click', sendChat);
+    els.chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+
+    function openStage() {
+      els.stage.classList.add('show');
+      els.chatList.innerHTML = '';
+    }
+    function closeStage() {
+      els.stage.classList.remove('show');
+      els.stageVideo.srcObject = null;
+      els.stageStatus.textContent = '';
+    }
+
+    /* ---------------- HOST FLOW ---------------- */
+    async function startHosting(title) {
+      role = 'host';
+      hostPCs = {};
+      addedHostCandidateCount = {};
+      openStage();
+      els.endLiveBtn.style.display = 'block';
+      els.stageVideo.muted = true;
+      els.stageStatus.textContent = 'Starting camera…';
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      } catch (err) {
+        console.error(err);
+        els.stageStatus.textContent = 'Could not access your camera/microphone. Check browser permissions.';
+        return;
+      }
+
+      els.stageVideo.srcObject = localStream;
+      els.stageStatus.textContent = '';
+
+      const docRef = await addDoc(collection(db, 'liveStreams'), {
+        hostUid: currentUser.uid,
+        hostName: currentUser.displayName || currentUser.email.split('@')[0],
+        hostPhoto: currentUser.photoURL || '',
+        title: title || 'Live now',
+        active: true,
+        startedAt: serverTimestamp(),
+      });
+      activeStreamId = docRef.id;
+      subscribeChat(activeStreamId);
+
+      // Watch for new viewers joining, answer each one.
+      unsubViewers = onSnapshot(collection(db, 'liveStreams', activeStreamId, 'viewers'), (snap) => {
+        els.viewerCountNum.textContent = snap.size;
+        snap.docChanges().forEach((change) => {
+          const viewerId = change.doc.id;
+          const data = change.doc.data();
+          if (change.type === 'removed') {
+            if (hostPCs[viewerId]) { hostPCs[viewerId].close(); delete hostPCs[viewerId]; }
+            return;
+          }
+          if (!hostPCs[viewerId] && data.offer) {
+            answerViewer(viewerId, data.offer);
+          }
+          if (hostPCs[viewerId] && Array.isArray(data.viewerCandidates)) {
+            const seen = addedHostCandidateCount[viewerId] || 0;
+            data.viewerCandidates.slice(seen).forEach((c) => {
+              hostPCs[viewerId].addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+            });
+            addedHostCandidateCount[viewerId] = data.viewerCandidates.length;
+          }
+        });
+      });
+    }
+
+    async function answerViewer(viewerId, offer) {
+      const peer = new RTCPeerConnection(RTC_CONFIG);
+      hostPCs[viewerId] = peer;
+      addedHostCandidateCount[viewerId] = 0;
+
+      localStream.getTracks().forEach((track) => peer.addTrack(track, localStream));
+
+      peer.onicecandidate = (e) => {
+        if (e.candidate) {
+          updateDoc(doc(db, 'liveStreams', activeStreamId, 'viewers', viewerId), {
+            hostCandidates: arrayUnion(e.candidate.toJSON()),
+          }).catch(() => {});
+        }
+      };
+
+      await peer.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peer.createAnswer();
+      await peer.setLocalDescription(answer);
+
+      await updateDoc(doc(db, 'liveStreams', activeStreamId, 'viewers', viewerId), {
+        answer: { type: answer.type, sdp: answer.sdp },
+      });
+    }
+
+    async function endLive() {
+      if (localStream) localStream.getTracks().forEach((t) => t.stop());
+      Object.values(hostPCs).forEach((p) => p.close());
+      hostPCs = {};
+      if (activeStreamId) {
+        try { await updateDoc(doc(db, 'liveStreams', activeStreamId), { active: false }); } catch {}
+      }
+      if (unsubViewers) { unsubViewers(); unsubViewers = null; }
+      if (unsubChat) { unsubChat(); unsubChat = null; }
+      activeStreamId = null;
+      role = null;
+      closeStage();
+      els.endLiveBtn.style.display = 'none';
+      showToast('Live ended');
+    }
+    els.endLiveBtn.addEventListener('click', () => {
+      if (window.confirm('End your live stream?')) endLive();
+    });
+
+    /* ---------------- VIEWER FLOW ---------------- */
+    async function joinAsViewer(streamId, streamData) {
+      role = 'viewer';
+      activeStreamId = streamId;
+      addedViewerCandidateCount = 0;
+      openStage();
+      els.endLiveBtn.style.display = 'none';
+      els.stageVideo.muted = false;
+      els.stageStatus.textContent = 'Connecting…';
+      els.viewerCountNum.textContent = streamData?.viewerCount || '';
+
+      pc = new RTCPeerConnection(RTC_CONFIG);
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+
+      pc.ontrack = (e) => {
+        els.stageVideo.srcObject = e.streams[0];
+        els.stageStatus.textContent = '';
+      };
+
+      const viewerDocRef = doc(db, 'liveStreams', streamId, 'viewers', currentUser.uid);
+
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
+          updateDoc(viewerDocRef, { viewerCandidates: arrayUnion(e.candidate.toJSON()) }).catch(() => {});
+        }
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      await setDoc(viewerDocRef, {
+        uid: currentUser.uid,
+        name: currentUser.displayName || currentUser.email.split('@')[0],
+        offer: { type: offer.type, sdp: offer.sdp },
+        joinedAt: serverTimestamp(),
+      });
+
+      subscribeChat(streamId);
+
+      // Watch the parent stream doc — leave automatically if host ends the stream.
+      unsubStreamDoc = onSnapshot(doc(db, 'liveStreams', streamId), (snap) => {
+        if (!snap.exists() || !snap.data().active) {
+          showToast('This stream has ended');
+          leaveAsViewer();
+        }
+      });
+
+      // Watch own viewer doc for the host's answer + ICE candidates.
+      unsubMyViewerDoc = onSnapshot(viewerDocRef, async (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (data.answer && pc.signalingState !== 'stable') {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        }
+        if (Array.isArray(data.hostCandidates)) {
+          data.hostCandidates.slice(addedViewerCandidateCount).forEach((c) => {
+            pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+          });
+          addedViewerCandidateCount = data.hostCandidates.length;
+        }
+      });
+    }
+
+    async function leaveAsViewer() {
+      if (pc) { pc.close(); pc = null; }
+      if (unsubStreamDoc) { unsubStreamDoc(); unsubStreamDoc = null; }
+      if (unsubMyViewerDoc) { unsubMyViewerDoc(); unsubMyViewerDoc = null; }
+      if (unsubChat) { unsubChat(); unsubChat = null; }
+      if (activeStreamId && currentUser) {
+        try { await deleteDoc(doc(db, 'liveStreams', activeStreamId, 'viewers', currentUser.uid)); } catch {}
+      }
+      activeStreamId = null;
+      role = null;
+      closeStage();
+    }
+
+    document.getElementById('leaveStage').addEventListener('click', () => {
+      if (role === 'host') {
+        if (window.confirm('End your live stream?')) endLive();
+      } else {
+        leaveAsViewer();
+      }
+    });
+
+    /* ---------------- Go-live setup sheet ---------------- */
+    document.getElementById('openSetup').addEventListener('click', () => {
+      els.setupBackdrop.classList.add('show');
+    });
+    document.getElementById('cancelSetup').addEventListener('click', () => {
+      els.setupBackdrop.classList.remove('show');
+    });
+    document.getElementById('startLiveBtn').addEventListener('click', () => {
+      els.setupBackdrop.classList.remove('show');
+      startHosting(els.liveTitle.value.trim());
+      els.liveTitle.value = '';
+    });
+
+    (async () => {
+      currentUser = await requireAuth();
+      if (!currentUser) return;
+      subscribeList();
+    })();
+
+    window.addEventListener('beforeunload', () => {
+      if (role === 'host') {
+        navigator.sendBeacon && activeStreamId; // best-effort only; real cleanup needs the user to tap End Live
+      }
+    });
+  </script>
+</body>
+</html>
