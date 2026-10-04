@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Beam</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    .bm-top { justify-content: flex-start; gap: 12px; }
+    .bm-top a { font-size: 18px; color: var(--text-secondary); }
+    .bm-top span { font-size: 16px; font-weight: 700; }
+
+    .bm-body { padding: 16px; max-width: 560px; margin: 0 auto calc(24px + var(--safe-bottom)); }
+
+    /* Preview of the content being beamed */
+    .bm-preview { padding: 14px; display: flex; gap: 12px; align-items: center; margin-bottom: 22px; }
+    .bm-thumb {
+      width: 56px; height: 56px; border-radius: var(--radius-md);
+      background: var(--grad-brand); flex: 0 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; font-size: 20px;
+    }
+    .bm-thumb img, .bm-thumb video { width: 100%; height: 100%; object-fit: cover; }
+    .bm-preview-text { flex: 1; min-width: 0; }
+    .bm-preview-author { font-size: 13px; font-weight: 700; }
+    .bm-preview-caption { font-size: 12px; color: var(--text-secondary); margin-top: 2px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .bm-section-title {
+      font-size: 12.5px; font-weight: 700; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.04em;
+      margin: 4px 0 12px;
+    }
+
+    /* Destination options */
+    .bm-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px; margin-bottom: 10px; cursor: pointer;
+    }
+    .bm-option-icon {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: rgba(124,58,237,0.15);
+      display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
+    }
+    .bm-option-icon svg { width: 19px; height: 19px; stroke: var(--cyan); }
+    .bm-option-text { flex: 1; }
+    .bm-option-text b { font-size: 14px; font-weight: 700; display: block; }
+    .bm-option-text span { font-size: 12px; color: var(--text-muted); }
+    .bm-option-chevron { color: var(--text-muted); font-size: 16px; }
+
+    /* Friend picker (expands inline under the "Send to a friend" option) */
+    .bm-friends { display: none; margin: -2px 0 14px; padding: 6px; }
+    .bm-friends.show { display: block; }
+    .bm-friend-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 8px; border-radius: var(--radius-md);
+    }
+    .bm-friend-row:active { background: rgba(255,255,255,0.05); }
+    .bm-friend-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--grad-brand);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12.5px; font-weight: 700; flex: 0 0 auto; overflow: hidden;
+    }
+    .bm-friend-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .bm-friend-name { flex: 1; font-size: 13.5px; font-weight: 600; }
+    .bm-friend-check {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 1.5px solid var(--line-strong);
+      display: flex; align-items: center; justify-content: center;
+      flex: 0 0 auto;
+    }
+    .bm-friend-row.selected .bm-friend-check { background: var(--grad-brand); border-color: transparent; }
+    .bm-friend-row.selected .bm-friend-check::after { content: "✓"; color: #fff; font-size: 11px; font-weight: 800; }
+    .bm-friends-empty { text-align: center; color: var(--text-muted); font-size: 12.5px; padding: 16px 0; }
+    .bm-send-friends-btn { margin-top: 10px; }
+
+    .bm-caption-field { margin-bottom: 18px; }
+    .bm-caption-field textarea {
+      width: 100%; min-height: 60px; resize: vertical;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--line-soft);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      padding: 12px 14px; font-size: 13.5px; font-family: inherit; outline: none;
+    }
+
+    .bm-loading, .bm-error { text-align: center; color: var(--text-muted); font-size: 13px; padding: 40px 20px; }
+  </style>
+</head>
+<body>
+  <div class="bg-cosmic"></div>
+
+  <header class="top-bar bm-top">
+    <a href="javascript:history.back()" aria-label="Back">←</a>
+    <span>Beam This</span>
+  </header>
+
+  <main class="page">
+    <div class="bm-body">
+      <p class="bm-loading" id="loadingHint">Loading…</p>
+
+      <div id="content" style="display:none;">
+        <div class="card bm-preview">
+          <div class="bm-thumb" id="bmThumb">🌌</div>
+          <div class="bm-preview-text">
+            <div class="bm-preview-author" id="bmAuthor">…</div>
+            <div class="bm-preview-caption" id="bmCaption"></div>
+          </div>
+        </div>
+
+        <div class="bm-caption-field">
+          <textarea id="bmNote" placeholder="Add your own note (optional)…" maxlength="200"></textarea>
+        </div>
+
+        <div class="bm-section-title">Share To</div>
+
+        <div class="card bm-option" id="optMySpace">
+          <div class="bm-option-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg>
+          </div>
+          <div class="bm-option-text"><b>My Space</b><span>Repost to your own feed</span></div>
+          <span class="bm-option-chevron">›</span>
+        </div>
+
+        <div class="card bm-option" id="optFriends">
+          <div class="bm-option-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="bm-option-text"><b>Send to Friends</b><span>Share privately via Messages</span></div>
+          <span class="bm-option-chevron">›</span>
+        </div>
+        <div class="bm-friends" id="friendsPanel">
+          <div id="friendsList"></div>
+          <p class="bm-friends-empty" id="friendsEmpty" style="display:none;">Add some friends first — try Search.</p>
+          <button type="button" class="btn btn-primary btn-block bm-send-friends-btn" id="sendFriendsBtn" disabled>Send</button>
+        </div>
+
+        <div class="card bm-option" id="optPublic">
+          <div class="bm-option-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20Z"/></svg>
+          </div>
+          <div class="bm-option-text"><b>Public Link</b><span>Copy link or share outside GAIVEX</span></div>
+          <span class="bm-option-chevron">›</span>
+        </div>
+      </div>
+
+      <p class="bm-error" id="errorHint" style="display:none;">This pulse could not be found — it may have been deleted.</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      db,
+      doc, getDoc, addDoc, setDoc, collection, serverTimestamp,
+    } from './js/firebase-init.js';
+    import { requireAuth, showToast } from './js/app.js';
+
+    const params = new URLSearchParams(window.location.search);
+    const contentId = params.get('id');
+    const contentType = params.get('type') === 'reel' ? 'reel' : 'post'; // default: post
+
+    function initialsOf(name) {
+      return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+    function avatarInner(photoURL, name) {
+      return photoURL ? `<img src="${photoURL}" alt="" />` : initialsOf(name);
+    }
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    let currentUser = null;
+    let content = null;
+    let selectedFriendUids = new Set();
+
+    function publicUrl() {
+      const page = contentType === 'reel' ? 'pulse.html' : 'post-detail.html';
+      return `${window.location.origin}/${page}?id=${contentId}`;
+    }
+
+    async function loadContent() {
+      if (!contentId) {
+        document.getElementById('loadingHint').style.display = 'none';
+        document.getElementById('errorHint').style.display = 'block';
+        return;
+      }
+      try {
+        const col = contentType === 'reel' ? 'reels' : 'posts';
+        const snap = await getDoc(doc(db, col, contentId));
+        if (!snap.exists()) throw new Error('not-found');
+        content = snap.data();
+
+        document.getElementById('loadingHint').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+        document.getElementById('bmAuthor').textContent = content.authorName || 'GAIVEX user';
+        document.getElementById('bmCaption').textContent = content.text || content.caption || '';
+
+        const thumb = document.getElementById('bmThumb');
+        const mediaUrl = content.mediaURL || content.videoURL;
+        if (mediaUrl && contentType === 'reel') {
+          thumb.innerHTML = `<video src="${mediaUrl}" muted></video>`;
+        } else if (mediaUrl) {
+          thumb.innerHTML = `<img src="${mediaUrl}" alt="" />`;
+        } else {
+          thumb.textContent = '🌌';
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('loadingHint').style.display = 'none';
+        document.getElementById('errorHint').style.display = 'block';
+      }
+    }
+
+    /* ---- Beam to My Space (repost) ---- */
+    document.getElementById('optMySpace').addEventListener('click', async () => {
+      if (!content || !currentUser) return;
+      const note = document.getElementById('bmNote').value.trim();
+      const btn = document.getElementById('optMySpace');
+      btn.style.opacity = '0.6';
+      try {
+        await addDoc(collection(db, 'posts'), {
+          uid: currentUser.uid,
+          authorName: currentUser.displayName || currentUser.email.split('@')[0],
+          authorPhoto: currentUser.photoURL || '',
+          text: note,
+          mediaURL: contentType === 'post' ? (content.mediaURL || '') : '',
+          beamedFrom: {
+            id: contentId,
+            type: contentType,
+            authorName: content.authorName || 'GAIVEX user',
+            text: content.text || content.caption || '',
+            mediaURL: content.mediaURL || content.videoURL || '',
+          },
+          likes: [],
+          commentsCount: 0,
+          createdAt: serverTimestamp(),
+        });
+        showToast('Beamed to your Space ✦');
+        window.location.href = 'home.html';
+      } catch (err) {
+        console.error(err);
+        showToast('Could not beam this right now.');
+        btn.style.opacity = '1';
+      }
+    });
+
+    /* ---- Beam to Friends ---- */
+    document.getElementById('optFriends').addEventListener('click', async () => {
+      const panel = document.getElementById('friendsPanel');
+      const willShow = !panel.classList.contains('show');
+      panel.classList.toggle('show', willShow);
+      if (willShow && !panel.dataset.loaded) {
+        panel.dataset.loaded = '1';
+        await loadFriends();
+      }
+    });
+
+    async function loadFriends() {
+      const listEl = document.getElementById('friendsList');
+      const emptyEl = document.getElementById('friendsEmpty');
+      try {
+        const mySnap = await getDoc(doc(db, 'users', currentUser.uid));
+        const friendUids = mySnap.exists() && Array.isArray(mySnap.data().friends) ? mySnap.data().friends : [];
+
+        if (friendUids.length === 0) {
+          emptyEl.style.display = 'block';
+          return;
+        }
+
+        const profiles = await Promise.all(friendUids.map(async (uid) => {
+          const s = await getDoc(doc(db, 'users', uid));
+          return { uid, ...(s.exists() ? s.data() : { username: 'GAIVEX user' }) };
+        }));
+
+        listEl.innerHTML = '';
+        profiles.forEach((p) => {
+          const row = document.createElement('div');
+          row.className = 'bm-friend-row';
+          row.dataset.uid = p.uid;
+          row.innerHTML = `
+            <div class="bm-friend-avatar">${avatarInner(p.photoURL, p.username)}</div>
+            <div class="bm-friend-name">${escapeHtml(p.username || 'GAIVEX user')}</div>
+            <div class="bm-friend-check"></div>
+          `;
+          row.addEventListener('click', () => {
+            if (selectedFriendUids.has(p.uid)) {
+              selectedFriendUids.delete(p.uid);
+              row.classList.remove('selected');
+            } else {
+              selectedFriendUids.add(p.uid);
+              row.classList.add('selected');
+            }
+            document.getElementById('sendFriendsBtn').disabled = selectedFriendUids.size === 0;
+          });
+          listEl.appendChild(row);
+        });
+      } catch (err) {
+        console.error(err);
+        emptyEl.textContent = 'Could not load your friends list.';
+        emptyEl.style.display = 'block';
+      }
+    }
+
+    function conversationId(uidA, uidB) {
+      return [uidA, uidB].sort().join('_');
+    }
+
+    document.getElementById('sendFriendsBtn').addEventListener('click', async () => {
+      if (selectedFriendUids.size === 0) return;
+      const note = document.getElementById('bmNote').value.trim();
+      const link = publicUrl();
+      const messageText = note ? `${note}\n${link}` : `Check this out: ${link}`;
+
+      const btn = document.getElementById('sendFriendsBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      try {
+        await Promise.all(Array.from(selectedFriendUids).map(async (friendUid) => {
+          const convId = conversationId(currentUser.uid, friendUid);
+          // Ensure the conversation doc (with participants) exists BEFORE writing the
+          // message, since the messages subcollection's rules check participants on
+          // the parent doc — writing the message first would fail for a brand-new chat.
+          await setDoc(doc(db, 'conversations', convId), {
+            participants: [currentUser.uid, friendUid],
+            lastMessage: messageText,
+            lastSenderId: currentUser.uid,
+            updatedAt: serverTimestamp(),
+          }, { merge: true });
+          await addDoc(collection(db, 'conversations', convId, 'messages'), {
+            senderId: currentUser.uid,
+            text: messageText,
+            createdAt: serverTimestamp(),
+          });
+        }));
+        showToast(`Beamed to ${selectedFriendUids.size} friend${selectedFriendUids.size > 1 ? 's' : ''} ✦`);
+        window.location.href = 'messages.html';
+      } catch (err) {
+        console.error(err);
+        showToast('Could not send to everyone — please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Send';
+      }
+    });
+
+    /* ---- Public link ---- */
+    document.getElementById('optPublic').addEventListener('click', async () => {
+      const url = publicUrl();
+      const shareData = {
+        title: 'GAIVEX',
+        text: content?.text || content?.caption || 'Check this out on GAIVEX',
+        url,
+      };
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(url);
+          showToast('Link copied to clipboard ✦');
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') console.warn('Share failed:', err);
+      }
+    });
+
+    (async () => {
+      currentUser = await requireAuth();
+      if (!currentUser) return;
+      await loadContent();
+    })();
+  </script>
+</body>
+</html>
