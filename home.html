@@ -92,6 +92,10 @@
       border: 1px dashed var(--line-strong);
     }
 
+    /* Quick links: Events / Live */
+    .quick-links { display: flex; gap: 10px; margin-bottom: 16px; }
+    .ql { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
     /* Composer teaser */
     .composer {
       display: flex;
@@ -151,6 +155,11 @@
     .pulse-more svg { width: 20px; height: 20px; fill: currentColor; }
 
     .pulse-body { font-size: 14px; line-height: 1.55; color: var(--text-primary); margin-bottom: 12px; }
+
+    /* Beamed (reposted) content */
+    .pulse-beamed { padding: 10px 12px; margin-bottom: 12px; }
+    .pulse-beamed b { font-size: 12px; display: block; }
+    .pulse-beamed span { font-size: 12.5px; color: var(--text-secondary); display: block; margin-top: 4px; }
 
     /* Image */
     .pulse-media {
@@ -306,6 +315,11 @@
           <div class="story-ring"><div class="story-avatar" id="myAvatar">＋</div></div>
           <span class="story-name">Your Space</span>
         </a>
+      </div>
+
+      <div class="quick-links">
+        <a href="events.html" class="card ql">📅 Events</a>
+        <a href="live.html" class="card ql">🔴 Live</a>
       </div>
 
       <a href="create-pulse.html" class="composer card">
@@ -596,6 +610,13 @@
         mediaHtml = `<img class="pulse-media" src="${post.mediaURL}" alt="" draggable="false" />`;
       }
 
+      // Beam করা (রিপোস্ট) কনটেন্ট
+      const beamedHtml = post.beamedFrom ? `
+        <div class="card pulse-beamed">
+          <b>🔁 ${escapeHtml(post.beamedFrom.authorName || 'GAIVEX user')}</b>
+          <span>${escapeHtml(post.beamedFrom.text || '')}</span>
+        </div>` : '';
+
       const article = document.createElement('article');
       article.className = 'pulse card';
       article.dataset.id = id;
@@ -611,6 +632,7 @@
           </button>
         </div>
         ${post.text ? `<p class="pulse-body">${escapeHtml(post.text)}</p>` : ''}
+        ${beamedHtml}
         ${mediaHtml}
         <div class="pulse-actions">
           <button class="like-btn ${liked ? 'liked' : ''}">
@@ -683,24 +705,10 @@
         }
       });
 
-      // শেয়ার বাটন
-      article.querySelector('.share-btn').addEventListener('click', async (e) => {
+      // শেয়ার বাটন → Beam পেজ
+      article.querySelector('.share-btn').addEventListener('click', (e) => {
         e.stopPropagation();
-        const shareData = {
-          title: 'GAIVEX Pulse',
-          text: post.text ? post.text.slice(0, 80) : 'Check out this pulse on GAIVEX',
-          url: postLink(id, post),
-        };
-        try {
-          if (navigator.share) {
-            await navigator.share(shareData);
-          } else {
-            await navigator.clipboard.writeText(shareData.url);
-            showToast('Link copied to clipboard ✦');
-          }
-        } catch (err) {
-          if (err.name !== 'AbortError') console.warn('Share failed:', err);
-        }
+        window.location.href = `beam.html?id=${id}&type=${post._col === 'reels' ? 'reel' : 'post'}`;
       });
 
       return article;
