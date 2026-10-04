@@ -97,7 +97,7 @@
       opacity: 0; pointer-events: none;
     }
     .pl-indicator.flash { animation: plFlash .6s ease; }
-    @keyframes plFlash { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.6); } 25% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.1); } }
+    @keyframes plFlash { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.6); } 25% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-110%) scale(1.1); } }
 
     .pl-heart { position: absolute; z-index: 7; font-size: 84px; pointer-events: none; animation: plHeart .8s ease forwards; }
     @keyframes plHeart { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4); } 25% { opacity: 1; transform: translate(-50%,-60%) scale(1.15); } 100% { opacity: 0; transform: translate(-50%,-110%) scale(1); } }
@@ -403,12 +403,7 @@
     }
 
     async function shareReel(id, reel) {
-      const url = reelLink(id);
-      if (navigator.share) {
-        try { await navigator.share({ title: 'Pulse on GAIVEX', text: reel.caption || 'Watch this pulse', url }); return; }
-        catch (err) { if (err && err.name === 'AbortError') return; }
-      }
-      showToast((await copyText(url)) ? 'Link copied ✦' : 'Could not copy link.');
+      window.location.href = `beam.html?id=${id}&type=reel`;
     }
 
     function wireItem(item, id) {
@@ -580,8 +575,7 @@
       if (unsubSheetComments) { unsubSheetComments(); unsubSheetComments = null; }
       activeReelId = null;
     }
-    $('closeSheet').addEventListener('click', closeComments);
-    $('sheetBackdrop').addEventListener('click', (e) => { if (e.target.id === 'sheetBackdrop') closeComments(); });
+    $('closeSheet').addEventListener('click', closeComments);$('sheetBackdrop').addEventListener('click', (e) => { if (e.target.id === 'sheetBackdrop') closeComments(); });
 
     async function sendSheetComment() {
       const input = $('sheetInput');
@@ -599,21 +593,18 @@
         await updateDoc(doc(db, 'reels', activeReelId), { commentsCount: increment(1) });
       } catch (err) { console.error(err); input.value = text; showToast('Could not post comment.'); }
     }
-    $('sheetSend').addEventListener('click', sendSheetComment);
-    $('sheetInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendSheetComment(); });
+    $('sheetSend').addEventListener('click', sendSheetComment);$('sheetInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendSheetComment(); });
 
     // ---------- More menu ----------
     function openMenu(item) { menuItem = item; renderMenu(); $('menuBackdrop').classList.add('show'); }
     function closeMenu() { $('menuBackdrop').classList.remove('show'); menuItem = null; }
-    $('closeMenu').addEventListener('click', closeMenu);
-    $('menuBackdrop').addEventListener('click', (e) => { if (e.target.id === 'menuBackdrop') closeMenu(); });
+    $('closeMenu').addEventListener('click', closeMenu);$('menuBackdrop').addEventListener('click', (e) => { if (e.target.id === 'menuBackdrop') closeMenu(); });
 
     function renderMenu() {
       if (!menuItem) return;
       const id = menuItem.dataset.id;
       const own = menuItem._reel.uid === currentUser.uid;
-      $('menuTitle').textContent = 'Options';
-      $('menuBody').innerHTML = `
+      $('menuTitle').textContent = 'Options';$('menuBody').innerHTML = `
         <button class="pl-row" data-act="save"><span>🔖 ${savedSet.has(id) ? 'Remove from saved' : 'Save reel'}</span></button>
         <button class="pl-row" data-act="share"><span>📤 Share</span></button>
         <button class="pl-row" data-act="copy"><span>🔗 Copy link</span></button>
