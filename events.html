@@ -54,6 +54,12 @@
     .ev-cover .date-badge .d-month { font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; display: block; }
     .ev-cover .date-badge .d-day { font-size: 15px; font-weight: 800; display: block; line-height: 1.1; }
     .ev-cover svg { width: 30px; height: 30px; stroke: rgba(255,255,255,0.85); }
+    .ev-del {
+      position: absolute; top: 8px; right: 8px;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(5,6,15,0.55); color: #fff; font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+    }
 
     .ev-info { padding: 14px; }
     .ev-title { font-size: 14.5px; font-weight: 700; margin-bottom: 4px; }
@@ -184,7 +190,7 @@
       doc, updateDoc, arrayUnion, arrayRemove,
       collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc,
     } from './js/firebase-init.js';
-    import { requireAuth, showToast, postMenuHTML, wirePostMenu } from './js/app.js';
+    import { requireAuth, showToast } from './js/app.js';
 
     let currentUser = null;
     let allEvents = [];
@@ -226,7 +232,7 @@
         <div class="ev-cover">
           <div class="date-badge"><span class="d-month">${badge.month}</span><span class="d-day">${badge.day}</span></div>
           <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          <div style="position:absolute; top:8px; right:8px;" class="menu-host"></div>
+          ${isOwn ? '<button type="button" class="ev-del" aria-label="Delete event">🗑</button>' : ''}
         </div>
         <div class="ev-info">
           <div class="ev-title">${escapeHtml(ev.title || 'Untitled Event')}</div>
@@ -249,12 +255,9 @@
         </div>
       `;
 
-      const menuHost = card.querySelector('.menu-host');
-      menuHost.innerHTML = postMenuHTML(isOwn);
-      menuHost.addEventListener('click', (e) => e.stopPropagation());
-      wirePostMenu(menuHost, {
-        copyUrl: `${window.location.origin}${window.location.pathname.replace('events.html', '')}events.html`,
-        onDelete: async () => {
+      const delBtn = card.querySelector('.ev-del');
+      if (delBtn) {
+        delBtn.addEventListener('click', async () => {
           if (!window.confirm('Delete this event? This cannot be undone.')) return;
           try {
             await deleteDoc(doc(db, 'events', id));
@@ -263,9 +266,8 @@
             console.error(err);
             showToast('Could not delete. Please try again.');
           }
-        },
-        onReport: () => { window.location.href = 'safety.html'; },
-      });
+        });
+      }
 
       return card;
     }
