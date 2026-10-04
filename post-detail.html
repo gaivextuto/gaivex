@@ -34,6 +34,9 @@
 
     .pd-text { font-size: 15px; line-height: 1.6; margin-bottom: 12px; }
     .pd-media { width: 100%; border-radius: var(--radius-md); max-height: 360px; object-fit: cover; margin-bottom: 12px; }
+    .pd-beamed { padding: 10px 12px; margin-bottom: 12px; }
+    .pd-beamed b { font-size: 12px; display: block; }
+    .pd-beamed span { font-size: 12.5px; color: var(--text-secondary); display: block; margin-top: 4px; }
 
     .pd-actions { display: flex; gap: 20px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
     .pd-actions button { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); font-weight: 500; }
@@ -105,6 +108,10 @@
           <button id="deleteBtn" style="display:none; color:var(--text-muted); font-size:18px;" title="Delete pulse">🗑</button>
         </div>
         <p class="pd-text" id="postText"></p>
+        <div class="card pd-beamed" id="postBeamed" style="display:none;">
+          <b id="beamedAuthor"></b>
+          <span id="beamedText"></span>
+        </div>
         <img class="pd-media" id="postMedia" style="display:none;" alt="" />
         <div class="pd-actions">
           <button class="like-btn" id="likeBtn">
@@ -178,6 +185,15 @@
       document.getElementById('postTime').textContent = timeAgo(post.createdAt);
       document.getElementById('postText').textContent = post.text || '';
 
+      const beamedEl = document.getElementById('postBeamed');
+      if (post.beamedFrom) {
+        document.getElementById('beamedAuthor').textContent = `🔁 ${post.beamedFrom.authorName || 'GAIVEX user'}`;
+        document.getElementById('beamedText').textContent = post.beamedFrom.text || '';
+        beamedEl.style.display = 'block';
+      } else {
+        beamedEl.style.display = 'none';
+      }
+
       const mediaEl = document.getElementById('postMedia');
       if (post.mediaURL) {
         mediaEl.src = post.mediaURL;
@@ -207,24 +223,10 @@
       }
     });
 
-    document.getElementById('shareBtn').addEventListener('click', async () => {
-      const shareUrl = window.location.href;
-      const textEl = document.getElementById('postText');
-      const shareData = {
-        title: 'GAIVEX Pulse',
-        text: textEl.textContent ? textEl.textContent.slice(0, 80) : 'Check out this pulse on GAIVEX',
-        url: shareUrl,
-      };
-      try {
-        if (navigator.share) {
-          await navigator.share(shareData);
-        } else {
-          await navigator.clipboard.writeText(shareUrl);
-          showToast('Link copied to clipboard ✦');
-        }
-      } catch (err) {
-        if (err.name !== 'AbortError') console.warn('Share failed:', err);
-      }
+    // Share → Beam পেজে যাবে
+    document.getElementById('shareBtn').addEventListener('click', () => {
+      if (!postId) return;
+      window.location.href = `beam.html?id=${postId}&type=post`;
     });
 
     document.getElementById('likeBtn').addEventListener('click', async () => {
