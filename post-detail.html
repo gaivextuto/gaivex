@@ -102,7 +102,7 @@
             <div class="pd-name" id="postName">…</div>
             <div class="pd-sub" id="postTime"></div>
           </div>
-          <div id="menuHost"></div>
+          <button id="deleteBtn" style="display:none; color:var(--text-muted); font-size:18px;" title="Delete pulse">🗑</button>
         </div>
         <p class="pd-text" id="postText"></p>
         <img class="pd-media" id="postMedia" style="display:none;" alt="" />
@@ -141,7 +141,7 @@
       doc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, increment,
       collection, addDoc, query, orderBy, onSnapshot, serverTimestamp,
     } from './js/firebase-init.js';
-    import { requireAuth, showToast, postMenuHTML, wirePostMenu } from './js/app.js';
+    import { requireAuth, showToast } from './js/app.js';
 
     const postId = new URLSearchParams(window.location.search).get('id');
 
@@ -190,31 +190,41 @@
       document.getElementById('likeCount').textContent = likes.length;
       document.getElementById('commentCount').textContent = post.commentsCount || 0;
 
-      const isOwn = currentUser && post.uid === currentUser.uid;
-      const menuHost = document.getElementById('menuHost');
-      if (!menuHost.dataset.wired) {
-        menuHost.innerHTML = postMenuHTML(isOwn);
-        wirePostMenu(menuHost, {
-          copyUrl: window.location.href,
-          onDelete: async () => {
-            if (!window.confirm('Delete this pulse? This cannot be undone.')) return;
-            try {
-              await deleteDoc(doc(db, 'posts', postId));
-              showToast('Pulse deleted');
-              window.location.href = 'home.html';
-            } catch (err) {
-              console.error(err);
-              showToast('Could not delete. Please try again.');
-            }
-          },
-          onReport: () => { window.location.href = 'safety.html'; },
-        });
-        menuHost.dataset.wired = '1';
-      }
+      const deleteBtn = document.getElementById('deleteBtn');
+      deleteBtn.style.display = (currentUser && post.uid === currentUser.uid) ? 'block' : 'none';
     }
 
-    document.getElementById('shareBtn').addEventListener('click', () => {
-      window.location.href = `beam.html?id=${postId}&type=post`;
+    document.getElementById('deleteBtn').addEventListener('click', async () => {
+      if (!postId) return;
+      if (!window.confirm('Delete this pulse? This cannot be undone.')) return;
+      try {
+        await deleteDoc(doc(db, 'posts', postId));
+        showToast('Pulse deleted');
+        window.location.href = 'home.html';
+      } catch (err) {
+        console.error(err);
+        showToast('Could not delete. Please try again.');
+      }
+    });
+
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+      const shareUrl = window.location.href;
+      const textEl = document.getElementById('postText');
+      const shareData = {
+        title: 'GAIVEX Pulse',
+        text: textEl.textContent ? textEl.textContent.slice(0, 80) : 'Check out this pulse on GAIVEX',
+        url: shareUrl,
+      };
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast('Link copied to clipboard ✦');
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') console.warn('Share failed:', err);
+      }
     });
 
     document.getElementById('likeBtn').addEventListener('click', async () => {
