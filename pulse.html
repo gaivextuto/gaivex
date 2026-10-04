@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>GAIVEX — Pulse</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-
   <link rel="stylesheet" href="css/style.css" />
 
   <style>
@@ -24,146 +22,158 @@
       pointer-events: none;
     }
     .pl-top a { pointer-events: auto; color: #fff; font-size: 18px; }
-    .pl-top .brand { pointer-events: auto; font-weight: 800; font-size: 16px; color: #fff; }
+    .pl-tabs { display: flex; gap: 18px; pointer-events: auto; }
+    .pl-tabs button {
+      color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 700;
+      padding: 4px 2px; border-bottom: 2px solid transparent;
+    }
+    .pl-tabs button.active { color: #fff; border-bottom-color: #fff; }
 
     .pl-feed {
-      height: 100dvh;
-      overflow-y: scroll;
-      scroll-snap-type: y mandatory;
-      scrollbar-width: none;
+      height: 100dvh; overflow-y: scroll;
+      scroll-snap-type: y mandatory; scrollbar-width: none;
     }
     .pl-feed::-webkit-scrollbar { display: none; }
 
     .pl-item {
-      position: relative;
-      height: 100dvh;
-      scroll-snap-align: start;
-      display: flex;
-      align-items: flex-end;
-      background: #000;
-      overflow: hidden;
+      position: relative; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always;
+      display: flex; align-items: flex-end; background: #000; overflow: hidden;
     }
-    .pl-item video {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-    .pl-item .scrim {
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.75) 100%);
-      pointer-events: none;
-    }
+    .pl-item video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .pl-item .scrim { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.75) 100%); pointer-events: none; }
 
-    .pl-info {
-      position: relative; z-index: 5;
-      padding: 0 84px 96px 16px;
-      color: #fff;
-      width: 100%;
-    }
-    .pl-author { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .pl-info { position: relative; z-index: 5; padding: 0 84px 96px 16px; color: #fff; width: 100%; transition: opacity .2s; }
+    .pl-author { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: #fff; }
     .pl-avatar {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: var(--grad-brand);
+      width: 34px; height: 34px; border-radius: 50%; background: var(--grad-brand);
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 12px; flex: 0 0 auto; overflow: hidden;
       border: 1.5px solid rgba(255,255,255,0.6);
     }
     .pl-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .pl-author b { font-size: 14px; font-weight: 700; }
-    .pl-caption { font-size: 13.5px; line-height: 1.45; max-width: 260px; }
+    .pl-caption {
+      font-size: 13.5px; line-height: 1.45; max-width: 270px; word-break: break-word;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .pl-caption.open { -webkit-line-clamp: unset; }
+    .pl-views { display: block; margin-top: 6px; font-size: 11.5px; opacity: .75; }
 
     .pl-actions {
       position: absolute; right: 10px; bottom: 96px; z-index: 5;
-      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px; transition: opacity .2s;
     }
-    .pl-action-btn {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      color: #fff; font-size: 11px; font-weight: 600;
-    }
+    .pl-action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #fff; font-size: 11px; font-weight: 600; }
     .pl-action-btn .circle {
       width: 42px; height: 42px; border-radius: 50%;
-      background: rgba(255,255,255,0.12);
-      backdrop-filter: blur(6px);
+      background: rgba(255,255,255,0.12); backdrop-filter: blur(6px);
       display: flex; align-items: center; justify-content: center;
     }
-    .pl-action-btn svg { width: 20px; height: 20px; stroke: #fff; }
+    .pl-action-btn svg { width: 20px; height: 20px; stroke: #fff; fill: none; }
     .pl-action-btn.liked .circle { background: var(--magenta); }
-    .pl-action-btn.liked svg { fill: #fff; stroke: #fff; }
+    .pl-action-btn.liked svg { fill: #fff; }
+    .pl-action-btn.saved .circle { background: var(--cyan); }
+    .pl-action-btn.saved svg { fill: #fff; }
 
     .pl-mute {
-      position: absolute; top: calc(16px + var(--safe-top)); right: 16px; z-index: 6;
-      width: 34px; height: 34px; border-radius: 50%;
-      background: rgba(0,0,0,0.4);
+      position: absolute; top: calc(16px + var(--safe-top)); right: 16px; z-index: 26;
+      width: 34px; height: 34px; border-radius: 50%; background: rgba(0,0,0,0.4);
       display: flex; align-items: center; justify-content: center;
     }
-    .pl-mute svg { width: 16px; height: 16px; stroke: #fff; }
+    .pl-mute svg { width: 16px; height: 16px; stroke: #fff; fill: none; }
+
+    .pl-progress {
+      position: absolute; left: 0; right: 0; z-index: 6; height: 18px;
+      bottom: calc(var(--nav-height, 64px) + var(--safe-bottom, 0px) - 8px);
+      display: flex; align-items: flex-end; touch-action: none;
+    }
+    .pl-progress .track { width: 100%; height: 3px; background: rgba(255,255,255,0.25); }
+    .pl-progress .bar { height: 100%; width: 0; background: #fff; }
+
+    .pl-indicator {
+      position: absolute; top: 50%; left: 50%; z-index: 4; transform: translate(-50%, -50%) scale(.6);
+      width: 74px; height: 74px; border-radius: 50%; background: rgba(0,0,0,0.45);
+      color: #fff; font-size: 30px; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+    }
+    .pl-indicator.flash { animation: plFlash .6s ease; }
+    @keyframes plFlash { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.6); } 25% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.1); } }
+
+    .pl-heart { position: absolute; z-index: 7; font-size: 84px; pointer-events: none; animation: plHeart .8s ease forwards; }
+    @keyframes plHeart { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4); } 25% { opacity: 1; transform: translate(-50%,-60%) scale(1.15); } 100% { opacity: 0; transform: translate(-50%,-110%) scale(1); } }
+
+    body.clear .pl-actions, body.clear .pl-info { opacity: 0; pointer-events: none; }
+    .pl-clear-exit {
+      position: fixed; left: 50%; transform: translateX(-50%); z-index: 30; display: none;
+      bottom: calc(var(--nav-height, 64px) + var(--safe-bottom, 0px) + 18px);
+      padding: 8px 16px; border-radius: 999px; background: rgba(0,0,0,0.6); color: #fff; font-size: 12.5px; font-weight: 600;
+    }
+    body.clear .pl-clear-exit { display: block; }
 
     .pl-empty {
-      height: 100dvh;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 14px; padding: 0 30px; text-align: center;
+      position: fixed; inset: 0; z-index: 3; display: none; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px; padding: 0 30px; text-align: center;
       color: var(--text-secondary); background: var(--bg-void);
     }
-    .pl-empty svg { width: 44px; height: 44px; stroke: var(--cyan); }
 
-    /* Comments bottom sheet */
-    .pl-sheet-backdrop {
-      position: fixed; inset: 0; z-index: 60;
-      background: rgba(0,0,0,0.6);
-      display: none; align-items: flex-end;
-    }
+    /* Sheets */
+    .pl-sheet-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.6); display: none; align-items: flex-end; }
     .pl-sheet-backdrop.show { display: flex; }
     .pl-sheet {
-      width: 100%; max-height: 70vh;
-      background: var(--bg-surface);
-      border: 1px solid var(--line-soft);
-      border-radius: 22px 22px 0 0;
-      display: flex; flex-direction: column;
-      padding-bottom: var(--safe-bottom);
+      width: 100%; max-height: 75vh; background: var(--bg-surface); border: 1px solid var(--line-soft);
+      border-radius: 22px 22px 0 0; display: flex; flex-direction: column; padding-bottom: var(--safe-bottom);
     }
     .pl-sheet-head {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px; border-bottom: 1px solid var(--line-soft);
-      font-size: 14px; font-weight: 700;
+      padding: 14px 16px; border-bottom: 1px solid var(--line-soft); font-size: 14px; font-weight: 700;
     }
     .pl-sheet-head button { color: var(--text-secondary); font-size: 18px; }
     .pl-sheet-list { flex: 1; overflow-y: auto; padding: 12px 16px; }
     .pl-comment { display: flex; gap: 8px; margin-bottom: 14px; }
     .pl-comment-avatar {
-      width: 30px; height: 30px; border-radius: 50%;
-      background: var(--grad-brand);
+      width: 30px; height: 30px; border-radius: 50%; background: var(--grad-brand);
       display: flex; align-items: center; justify-content: center;
       font-size: 11px; font-weight: 700; flex: 0 0 auto; overflow: hidden;
     }
     .pl-comment-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .pl-comment-main { flex: 1; min-width: 0; }
     .pl-comment-name { font-size: 12.5px; font-weight: 600; }
-    .pl-comment-text { font-size: 13px; color: var(--text-secondary); margin-top: 1px; }
-    .pl-sheet-input {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 16px; border-top: 1px solid var(--line-soft);
-    }
+    .pl-comment-text { font-size: 13px; color: var(--text-secondary); margin-top: 1px; word-break: break-word; }
+    .pl-comment-del { color: var(--text-muted); font-size: 14px; align-self: flex-start; }
+    .pl-sheet-input { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--line-soft); }
     .pl-sheet-input input {
-      flex: 1; height: 40px; border-radius: var(--radius-pill);
-      background: rgba(255,255,255,0.05); border: 1px solid var(--line-soft);
-      color: var(--text-primary); padding: 0 14px; font-size: 13.5px; outline: none;
+      flex: 1; height: 40px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line-soft); color: var(--text-primary); padding: 0 14px; font-size: 13.5px; outline: none;
     }
-    .pl-sheet-input button {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: var(--grad-brand);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .pl-sheet-input button svg { width: 16px; height: 16px; stroke: #fff; }
+    .pl-sheet-input button { width: 40px; height: 40px; border-radius: 50%; background: var(--grad-brand); display: flex; align-items: center; justify-content: center; }
+    .pl-sheet-input button svg { width: 16px; height: 16px; stroke: #fff; fill: none; }
     .pl-comments-empty { text-align: center; color: var(--text-muted); font-size: 12.5px; padding: 20px 0; }
+
+    .pl-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left;
+      padding: 14px 4px; font-size: 14px; color: var(--text-primary); border-bottom: 1px solid var(--line-soft);
+    }
+    .pl-row b { font-size: 12.5px; color: var(--cyan); }
+    .pl-row.danger { color: #fda4af; }
+    .pl-chips { display: flex; gap: 6px; }
+    .pl-chip { padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.08); color: var(--text-primary); }
+    .pl-chip.on { background: var(--grad-brand); color: #fff; }
   </style>
 </head>
 <body>
   <div class="pl-top">
     <a href="home.html" aria-label="Back">←</a>
-    <span class="brand">Pulse</span>
+    <div class="pl-tabs">
+      <button type="button" data-tab="foryou" class="active">For you</button>
+      <button type="button" data-tab="saved">Saved</button>
+      <button type="button" data-tab="liked">Liked</button>
+    </div>
     <a href="create-pulse.html" aria-label="Add video">＋</a>
   </div>
 
-  <div id="feedWrap"></div>
+  <div class="pl-feed" id="feed"></div>
+  <div class="pl-empty" id="emptyMsg"></div>
+  <button type="button" class="pl-clear-exit" id="clearExit">Show controls</button>
 
   <nav class="bottom-nav">
     <a href="home.html" data-page="home">
@@ -187,19 +197,23 @@
     </a>
   </nav>
 
+  <!-- Comments -->
   <div class="pl-sheet-backdrop" id="sheetBackdrop">
     <div class="pl-sheet">
-      <div class="pl-sheet-head">
-        <span>Comments</span>
-        <button type="button" id="closeSheet">×</button>
-      </div>
+      <div class="pl-sheet-head"><span>Comments</span><button type="button" id="closeSheet">×</button></div>
       <div class="pl-sheet-list" id="sheetComments"></div>
       <div class="pl-sheet-input">
         <input type="text" id="sheetInput" placeholder="Add a comment…" maxlength="500" />
-        <button type="button" id="sheetSend">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
-        </button>
+        <button type="button" id="sheetSend"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg></button>
       </div>
+    </div>
+  </div>
+
+  <!-- More menu -->
+  <div class="pl-sheet-backdrop" id="menuBackdrop">
+    <div class="pl-sheet">
+      <div class="pl-sheet-head"><span id="menuTitle">Options</span><button type="button" id="closeMenu">×</button></div>
+      <div class="pl-sheet-list" id="menuBody"></div>
     </div>
   </div>
 
@@ -209,215 +223,368 @@
       doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, increment,
       collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
     } from './js/firebase-init.js';
-    import { requireAuth, setActiveNav, showToast, postMenuHTML, wirePostMenu } from './js/app.js';
+    import { requireAuth, setActiveNav, showToast } from './js/app.js';
 
     setActiveNav('pulse');
 
-    function initialsOf(name) {
-      return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-    }
-    function avatarInner(photoURL, name) {
-      return photoURL ? `<img src="${photoURL}" alt="" />` : initialsOf(name);
-    }
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str || '';
-      return div.innerHTML;
-    }
+    const $ = (id) => document.getElementById(id);
+    const feed = $('feed');
+    const params = new URLSearchParams(window.location.search);
+    const deepLinkId = params.get('id');
 
+    const ICON_MUTED = '<path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M23 9l-6 6M17 9l6 6"/>';
+    const ICON_SOUND = '<path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>';
+
+    function initialsOf(name) { return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase(); }
+    function avatarInner(photoURL, name) { return photoURL ? `<img src="${photoURL}" alt="" />` : initialsOf(name); }
+    function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+    function fmt(n) { n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1000 ? (n / 1000).toFixed(1) + 'K' : String(n); }
+
+    // ---------- State ----------
     let currentUser = null;
+    let tab = 'foryou';
+    let muted = true;
+    let autoNext = false;
+    let speed = 1;
+    let savedSet = new Set();
+    let savedLoaded = false;
+    let hiddenSet = new Set();
+    try { hiddenSet = new Set(JSON.parse(localStorage.getItem('gx_hidden_reels') || '[]')); } catch (e) { /* ignore */ }
+    const viewed = new Set();
+    const items = new Map();
     let activeReelId = null;
     let unsubSheetComments = null;
-    let muted = true;
+    let menuItem = null;
+    let deepLinked = false;
 
-    function renderEmpty() {
-      document.getElementById('feedWrap').innerHTML = `
-        <div class="pl-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-          <div>No pulses yet — be the first to share a short video.</div>
-          <a href="create-pulse.html" class="btn btn-primary">Create a Pulse</a>
-        </div>
-      `;
+    // ---------- Visibility / tabs ----------
+    function isVisible(item) {
+      const id = item.dataset.id;
+      if (hiddenSet.has(id)) return false;
+      if (tab === 'saved') return savedSet.has(id);
+      if (tab === 'liked') return (item._reel.likes || []).includes(currentUser.uid);
+      return true;
     }
 
-    function renderReel(id, reel) {
-      const likes = Array.isArray(reel.likes) ? reel.likes : [];
-      const liked = currentUser && likes.includes(currentUser.uid);
+    function refreshEmpty() {
+      const any = [...items.values()].some((i) => i.style.display !== 'none');
+      const box = $('emptyMsg');
+      if (any) { box.style.display = 'none'; return; }
+      const msgs = {
+        foryou: 'No pulses yet — be the first to share a short video.',
+        saved: 'No saved reels yet. Tap the bookmark on a reel to save it.',
+        liked: 'Reels you like will show up here.',
+      };
+      box.innerHTML = `<div>${msgs[tab]}</div>` + (tab === 'foryou' ? '<a href="create-pulse.html" class="btn btn-primary">Create a Pulse</a>' : '');
+      box.style.display = 'flex';
+    }
 
+    function applyFilters() {
+      items.forEach((item) => { item.style.display = isVisible(item) ? '' : 'none'; });
+      refreshEmpty();
+    }
+
+    document.querySelectorAll('.pl-tabs button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        tab = btn.dataset.tab;
+        document.querySelectorAll('.pl-tabs button').forEach((b) => b.classList.toggle('active', b === btn));
+        applyFilters();
+        feed.scrollTop = 0;
+      });
+    });
+
+    // ---------- Item building ----------
+    function createItem(id, reel) {
       const item = document.createElement('div');
       item.className = 'pl-item';
       item.dataset.id = id;
+      item._reel = reel;
       item.innerHTML = `
-        <video src="${reel.videoURL}" loop playsinline muted></video>
-        <button class="pl-mute" aria-label="Toggle sound">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>
-        </button>
-        <div class="pl-menu-host" style="position:absolute; top:calc(16px + var(--safe-top)); right:58px; z-index:6;"></div>
+        <video src="${reel.videoURL}" loop playsinline muted preload="auto"></video>
+        <button class="pl-mute" aria-label="Toggle sound"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_MUTED}</svg></button>
         <div class="scrim"></div>
+        <div class="pl-indicator"></div>
         <div class="pl-actions">
-          <button class="pl-action-btn like-btn ${liked ? 'liked' : ''}">
-            <span class="circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
-            <span class="like-count">${likes.length}</span>
+          <button class="pl-action-btn like-btn">
+            <span class="circle"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
+            <span class="like-count">0</span>
           </button>
           <button class="pl-action-btn comment-btn">
-            <span class="circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-            <span>${reel.commentsCount || 0}</span>
+            <span class="circle"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+            <span class="comment-count">0</span>
           </button>
-          <button class="pl-action-btn beam-btn">
-            <span class="circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/></svg></span>
-            <span>Beam</span>
+          <button class="pl-action-btn save-btn">
+            <span class="circle"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
+            <span>Save</span>
+          </button>
+          <button class="pl-action-btn share-btn">
+            <span class="circle"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg></span>
+            <span>Share</span>
+          </button>
+          <button class="pl-action-btn more-btn" aria-label="More">
+            <span class="circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="#fff"/><circle cx="12" cy="12" r="1.6" fill="#fff"/><circle cx="12" cy="19" r="1.6" fill="#fff"/></svg></span>
           </button>
         </div>
         <div class="pl-info">
-          <div class="pl-author">
+          <a class="pl-author" href="profile.html?uid=${reel.uid}">
             <div class="pl-avatar">${avatarInner(reel.authorPhoto, reel.authorName)}</div>
             <b>${escapeHtml(reel.authorName || 'GAIVEX user')}</b>
-          </div>
+          </a>
           ${reel.caption ? `<div class="pl-caption">${escapeHtml(reel.caption)}</div>` : ''}
+          <span class="pl-views"></span>
         </div>
+        <div class="pl-progress"><div class="track"><div class="bar"></div></div></div>
       `;
+      wireItem(item, id);
+      updateItem(item);
+      return item;
+    }
 
+    function updateItem(item) {
+      const reel = item._reel;
+      const likes = Array.isArray(reel.likes) ? reel.likes : [];
+      item.querySelector('.like-btn').classList.toggle('liked', likes.includes(currentUser.uid));
+      item.querySelector('.like-count').textContent = fmt(likes.length);
+      item.querySelector('.comment-count').textContent = fmt(reel.commentsCount);
+      item.querySelector('.pl-views').textContent = `${fmt(reel.views)} views`;
+      item.querySelector('.save-btn').classList.toggle('saved', savedSet.has(item.dataset.id));
+      const sound = item.querySelector('.pl-mute svg');
+      sound.innerHTML = muted ? ICON_MUTED : ICON_SOUND;
+    }
+
+    function flash(item, symbol) {
+      const el = item.querySelector('.pl-indicator');
+      el.textContent = symbol;
+      el.classList.remove('flash');
+      void el.offsetWidth;
+      el.classList.add('flash');
+    }
+
+    function goNext(item) {
+      let n = item.nextElementSibling;
+      while (n && n.style.display === 'none') n = n.nextElementSibling;
+      if (n) n.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function toggleLike(item, onlyAdd) {
+      const liked = item.querySelector('.like-btn').classList.contains('liked');
+      if (onlyAdd && liked) return;
+      try {
+        await updateDoc(doc(db, 'reels', item.dataset.id), {
+          likes: liked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid),
+        });
+      } catch (err) { console.warn('Could not update like:', err); showToast('Could not update like.'); }
+    }
+
+    async function toggleSave(id) {
+      const saved = savedSet.has(id);
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+          savedReels: saved ? arrayRemove(id) : arrayUnion(id),
+        });
+        showToast(saved ? 'Removed from saved' : 'Saved ✦');
+      } catch (err) { console.error(err); showToast('Could not save right now.'); }
+    }
+
+    function reelLink(id) {
+      return `${location.origin}${location.pathname}?id=${id}`;
+    }
+
+    async function copyText(text) {
+      try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fallback */ }
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+      } catch (e) { return false; }
+    }
+
+    async function shareReel(id, reel) {
+      const url = reelLink(id);
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Pulse on GAIVEX', text: reel.caption || 'Watch this pulse', url }); return; }
+        catch (err) { if (err && err.name === 'AbortError') return; }
+      }
+      showToast((await copyText(url)) ? 'Link copied ✦' : 'Could not copy link.');
+    }
+
+    function wireItem(item, id) {
       const video = item.querySelector('video');
+      const bar = item.querySelector('.bar');
+      const progress = item.querySelector('.pl-progress');
+      let lastTap = 0;
+      let tapTimer = null;
+
+      video.addEventListener('timeupdate', () => {
+        if (video.duration) bar.style.width = `${(video.currentTime / video.duration) * 100}%`;
+      });
+      video.addEventListener('ended', () => { if (autoNext) goNext(item); });
+
+      const seek = (e) => {
+        const r = progress.getBoundingClientRect();
+        const ratio = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+        if (video.duration) video.currentTime = ratio * video.duration;
+      };
+      progress.addEventListener('pointerdown', (e) => { progress.setPointerCapture(e.pointerId); seek(e); });
+      progress.addEventListener('pointermove', (e) => { if (e.buttons || e.pressure > 0) seek(e); });
 
       item.querySelector('.pl-mute').addEventListener('click', (e) => {
         e.stopPropagation();
         muted = !muted;
-        document.querySelectorAll('.pl-item video').forEach((v) => { v.muted = muted; });
+        items.forEach((it) => { it.querySelector('video').muted = muted; updateItem(it); });
       });
 
       item.addEventListener('click', (e) => {
-        if (e.target.closest('.pl-actions') || e.target.closest('.pl-mute')) return;
-        if (video.paused) video.play(); else video.pause();
-      });
-
-      item.querySelector('.like-btn').addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (!currentUser) return;
-        const btn = item.querySelector('.like-btn');
-        const nowLiked = btn.classList.contains('liked');
-        try {
-          await updateDoc(doc(db, 'reels', id), {
-            likes: nowLiked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid),
-          });
-        } catch (err) {
-          console.warn('Could not update like:', err);
+        if (e.target.closest('.pl-actions, .pl-mute, .pl-author, .pl-progress, .pl-caption')) return;
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          clearTimeout(tapTimer); lastTap = 0;
+          const r = item.getBoundingClientRect();
+          const h = document.createElement('div');
+          h.className = 'pl-heart'; h.textContent = '❤️';
+          h.style.left = `${e.clientX - r.left}px`; h.style.top = `${e.clientY - r.top}px`;
+          item.appendChild(h);
+          setTimeout(() => h.remove(), 850);
+          toggleLike(item, true);
+        } else {
+          lastTap = now;
+          tapTimer = setTimeout(() => {
+            if (video.paused) { video.play().catch(() => {}); flash(item, '▶'); }
+            else { video.pause(); flash(item, '⏸'); }
+          }, 300);
         }
       });
 
-      item.querySelector('.comment-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        openComments(id);
-      });
+      const cap = item.querySelector('.pl-caption');
+      if (cap) cap.addEventListener('click', (e) => { e.stopPropagation(); cap.classList.toggle('open'); });
 
-      item.querySelector('.beam-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        window.location.href = `beam.html?id=${id}&type=reel`;
-      });
-
-      const menuHost = item.querySelector('.pl-menu-host');
-      const isOwn = currentUser && reel.uid === currentUser.uid;
-      menuHost.innerHTML = postMenuHTML(isOwn);
-      menuHost.addEventListener('click', (e) => e.stopPropagation());
-      wirePostMenu(menuHost, {
-        copyUrl: `${window.location.origin}${window.location.pathname.replace('pulse.html', '')}pulse.html?id=${id}`,
-        onDelete: async () => {
-          if (!window.confirm('Delete this pulse? This cannot be undone.')) return;
-          try {
-            await deleteDoc(doc(db, 'reels', id));
-            showToast('Pulse deleted');
-          } catch (err) {
-            console.error(err);
-            showToast('Could not delete. Please try again.');
-          }
-        },
-        onReport: () => { window.location.href = 'safety.html'; },
-      });
-
-      return item;
+      item.querySelector('.like-btn').addEventListener('click', (e) => { e.stopPropagation(); toggleLike(item, false); });
+      item.querySelector('.comment-btn').addEventListener('click', (e) => { e.stopPropagation(); openComments(id); });
+      item.querySelector('.save-btn').addEventListener('click', (e) => { e.stopPropagation(); toggleSave(id); });
+      item.querySelector('.share-btn').addEventListener('click', (e) => { e.stopPropagation(); shareReel(id, item._reel); });
+      item.querySelector('.more-btn').addEventListener('click', (e) => { e.stopPropagation(); openMenu(item); });
     }
 
-    function setupAutoplay() {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target.querySelector('video');
-          if (!video) return;
-          if (entry.isIntersecting) {
-            video.muted = muted;
-            video.play().catch(() => {});
-          } else {
-            video.pause();
+    // ---------- Autoplay + views ----------
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const item = entry.target;
+        const video = item.querySelector('video');
+        if (!video) return;
+        if (entry.isIntersecting && item.style.display !== 'none') {
+          video.muted = muted;
+          video.playbackRate = speed;
+          video.play().catch(() => {});
+          const id = item.dataset.id;
+          if (!viewed.has(id)) {
+            viewed.add(id);
+            updateDoc(doc(db, 'reels', id), { views: increment(1) }).catch(() => {});
+          }
+        } else {
+          video.pause();
+        }
+      });
+    }, { threshold: 0.6 });
+
+    // ---------- Feed ----------
+    function subscribeFeed() {
+      const q = query(collection(db, 'reels'), orderBy('createdAt', 'desc'), limit(60));
+      onSnapshot(q, (snap) => {
+        snap.docChanges().forEach((ch) => {
+          const id = ch.doc.id;
+          const data = ch.doc.data();
+          if (ch.type === 'added') {
+            const item = createItem(id, data);
+            items.set(id, item);
+            feed.insertBefore(item, feed.children[ch.newIndex] || null);
+            item.style.display = isVisible(item) ? '' : 'none';
+            observer.observe(item);
+          } else if (ch.type === 'modified') {
+            const item = items.get(id);
+            if (item) { item._reel = data; updateItem(item); }
+          } else if (ch.type === 'removed') {
+            const item = items.get(id);
+            if (item) { observer.unobserve(item); item.remove(); items.delete(id); }
           }
         });
-      }, { threshold: 0.6 });
-
-      document.querySelectorAll('.pl-item').forEach((item) => observer.observe(item));
-    }
-
-    function subscribeFeed() {
-      const q = query(collection(db, 'reels'), orderBy('createdAt', 'desc'), limit(30));
-      onSnapshot(q, (snap) => {
-        if (snap.empty) {
-          renderEmpty();
-          return;
+        refreshEmpty();
+        if (!deepLinked && deepLinkId && items.has(deepLinkId)) {
+          deepLinked = true;
+          items.get(deepLinkId).scrollIntoView();
         }
-        const wrap = document.createElement('div');
-        wrap.className = 'pl-feed';
-        snap.forEach((d) => wrap.appendChild(renderReel(d.id, d.data())));
-
-        const feedWrap = document.getElementById('feedWrap');
-        feedWrap.innerHTML = '';
-        feedWrap.appendChild(wrap);
-        setupAutoplay();
       }, (err) => {
         console.error('Pulse feed error:', err);
+        const box = $('emptyMsg');
+        box.innerHTML = `<div>Could not load pulses (${err.code || 'error'}).</div>`;
+        box.style.display = 'flex';
       });
     }
 
-    // ---- Comments sheet ----
+    function subscribeSaved() {
+      onSnapshot(doc(db, 'users', currentUser.uid), (snap) => {
+        const data = snap.exists() ? snap.data() : {};
+        savedSet = new Set(Array.isArray(data.savedReels) ? data.savedReels : []);
+        items.forEach((item) => updateItem(item));
+        if (!savedLoaded) { savedLoaded = true; applyFilters(); }
+      }, (err) => console.warn('Saved list error:', err));
+    }
+
+    // ---------- Comments ----------
     function openComments(reelId) {
       activeReelId = reelId;
-      document.getElementById('sheetBackdrop').classList.add('show');
-
+      $('sheetBackdrop').classList.add('show');
       const q = query(collection(db, 'reels', reelId, 'comments'), orderBy('createdAt', 'asc'));
       if (unsubSheetComments) unsubSheetComments();
-      const listEl = document.getElementById('sheetComments');
+      const listEl = $('sheetComments');
+      listEl.innerHTML = '';
 
       unsubSheetComments = onSnapshot(q, (snap) => {
         listEl.innerHTML = '';
-        if (snap.empty) {
-          listEl.innerHTML = '<p class="pl-comments-empty">No comments yet.</p>';
-          return;
-        }
+        if (snap.empty) { listEl.innerHTML = '<p class="pl-comments-empty">No comments yet. Be the first!</p>'; return; }
         snap.forEach((d) => {
           const c = d.data();
           const row = document.createElement('div');
           row.className = 'pl-comment';
           row.innerHTML = `
             <div class="pl-comment-avatar">${avatarInner(c.photoURL, c.name)}</div>
-            <div>
+            <div class="pl-comment-main">
               <div class="pl-comment-name">${escapeHtml(c.name || 'GAIVEX user')}</div>
               <div class="pl-comment-text">${escapeHtml(c.text)}</div>
             </div>
+            ${c.uid === currentUser.uid ? '<button type="button" class="pl-comment-del" title="Delete">🗑</button>' : ''}
           `;
+          const del = row.querySelector('.pl-comment-del');
+          if (del) {
+            del.addEventListener('click', async () => {
+              if (!window.confirm('Delete this comment?')) return;
+              try {
+                await deleteDoc(doc(db, 'reels', reelId, 'comments', d.id));
+                await updateDoc(doc(db, 'reels', reelId), { commentsCount: increment(-1) });
+              } catch (err) { console.error(err); showToast('Could not delete comment.'); }
+            });
+          }
           listEl.appendChild(row);
         });
         listEl.scrollTop = listEl.scrollHeight;
+      }, (err) => {
+        console.error(err);
+        listEl.innerHTML = '<p class="pl-comments-empty">Could not load comments.</p>';
       });
     }
 
     function closeComments() {
-      document.getElementById('sheetBackdrop').classList.remove('show');
+      $('sheetBackdrop').classList.remove('show');
       if (unsubSheetComments) { unsubSheetComments(); unsubSheetComments = null; }
       activeReelId = null;
     }
-
-    document.getElementById('closeSheet').addEventListener('click', closeComments);
-    document.getElementById('sheetBackdrop').addEventListener('click', (e) => {
-      if (e.target.id === 'sheetBackdrop') closeComments();
-    });
+    $('closeSheet').addEventListener('click', closeComments);
+    $('sheetBackdrop').addEventListener('click', (e) => { if (e.target.id === 'sheetBackdrop') closeComments(); });
 
     async function sendSheetComment() {
-      const input = document.getElementById('sheetInput');
+      const input = $('sheetInput');
       const text = input.value.trim();
       if (!text || !activeReelId || !currentUser) return;
       input.value = '';
@@ -430,19 +597,99 @@
           createdAt: serverTimestamp(),
         });
         await updateDoc(doc(db, 'reels', activeReelId), { commentsCount: increment(1) });
-      } catch (err) {
-        console.error(err);
-        input.value = text;
-      }
+      } catch (err) { console.error(err); input.value = text; showToast('Could not post comment.'); }
     }
-    document.getElementById('sheetSend').addEventListener('click', sendSheetComment);
-    document.getElementById('sheetInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendSheetComment();
+    $('sheetSend').addEventListener('click', sendSheetComment);
+    $('sheetInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendSheetComment(); });
+
+    // ---------- More menu ----------
+    function openMenu(item) { menuItem = item; renderMenu(); $('menuBackdrop').classList.add('show'); }
+    function closeMenu() { $('menuBackdrop').classList.remove('show'); menuItem = null; }
+    $('closeMenu').addEventListener('click', closeMenu);
+    $('menuBackdrop').addEventListener('click', (e) => { if (e.target.id === 'menuBackdrop') closeMenu(); });
+
+    function renderMenu() {
+      if (!menuItem) return;
+      const id = menuItem.dataset.id;
+      const own = menuItem._reel.uid === currentUser.uid;
+      $('menuTitle').textContent = 'Options';
+      $('menuBody').innerHTML = `
+        <button class="pl-row" data-act="save"><span>🔖 ${savedSet.has(id) ? 'Remove from saved' : 'Save reel'}</span></button>
+        <button class="pl-row" data-act="share"><span>📤 Share</span></button>
+        <button class="pl-row" data-act="copy"><span>🔗 Copy link</span></button>
+        <div class="pl-row"><span>⚡ Speed</span><span class="pl-chips">${[0.5, 1, 1.5, 2].map((s) => `<button class="pl-chip ${s === speed ? 'on' : ''}" data-act="speed" data-v="${s}">${s}x</button>`).join('')}</span></div>
+        <button class="pl-row" data-act="auto"><span>⏭ Scroll to next automatically</span><b>${autoNext ? 'On' : 'Off'}</b></button>
+        <button class="pl-row" data-act="clear"><span>🧼 Clear mode</span></button>
+        <button class="pl-row" data-act="hide"><span>🚫 Not interested</span></button>
+        <button class="pl-row" data-act="report"><span>⚑ Report reel</span></button>
+        ${own ? '<button class="pl-row danger" data-act="delete"><span>Delete reel</span></button>' : ''}
+      `;
+    }
+
+    function renderReport() {
+      $('menuTitle').textContent = 'Report reel';
+      const reasons = ['Spam', 'Nudity or sexual content', 'Violence', 'Hate or harassment', 'False information', 'Something else'];
+      $('menuBody').innerHTML = reasons.map((r) => `<button class="pl-row" data-act="reason" data-v="${r}"><span>${r}</span></button>`).join('')
+        + '<button class="pl-row" data-act="back"><span>← Back</span></button>';
+    }
+
+    $('menuBody').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn || !menuItem) return;
+      const act = btn.dataset.act;
+      const item = menuItem;
+      const id = item.dataset.id;
+
+      if (act === 'save') { closeMenu(); toggleSave(id); }
+      else if (act === 'share') { closeMenu(); shareReel(id, item._reel); }
+      else if (act === 'copy') { closeMenu(); showToast((await copyText(reelLink(id))) ? 'Link copied ✦' : 'Could not copy link.'); }
+      else if (act === 'speed') {
+        speed = Number(btn.dataset.v);
+        items.forEach((it) => { it.querySelector('video').playbackRate = speed; });
+        renderMenu();
+      }
+      else if (act === 'auto') {
+        autoNext = !autoNext;
+        items.forEach((it) => { it.querySelector('video').loop = !autoNext; });
+        renderMenu();
+        showToast(autoNext ? 'Auto-scroll on' : 'Auto-scroll off');
+      }
+      else if (act === 'clear') { closeMenu(); document.body.classList.add('clear'); }
+      else if (act === 'hide') {
+        closeMenu();
+        hiddenSet.add(id);
+        try { localStorage.setItem('gx_hidden_reels', JSON.stringify([...hiddenSet])); } catch (err) { /* ignore */ }
+        goNext(item);
+        setTimeout(() => { item.style.display = 'none'; refreshEmpty(); }, 350);
+        showToast("Got it — we'll show fewer like this");
+      }
+      else if (act === 'report') { renderReport(); }
+      else if (act === 'back') { renderMenu(); }
+      else if (act === 'reason') {
+        const reason = btn.dataset.v;
+        closeMenu();
+        try {
+          await addDoc(collection(db, 'reports'), {
+            reelId: id, reelOwner: item._reel.uid, reporterUid: currentUser.uid, reason, createdAt: serverTimestamp(),
+          });
+          showToast('Thanks — we received your report');
+        } catch (err) { console.error(err); showToast('Could not send report.'); }
+      }
+      else if (act === 'delete') {
+        if (!window.confirm('Delete this reel? This cannot be undone.')) return;
+        closeMenu();
+        try { await deleteDoc(doc(db, 'reels', id)); showToast('Reel deleted'); }
+        catch (err) { console.error(err); showToast('Could not delete. Please try again.'); }
+      }
     });
 
+    $('clearExit').addEventListener('click', () => document.body.classList.remove('clear'));
+
+    // ---------- Boot ----------
     (async () => {
       currentUser = await requireAuth();
       if (!currentUser) return;
+      subscribeSaved();
       subscribeFeed();
     })();
   </script>
