@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Space</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .sv-top { justify-content: space-between; }
+    .sv-top .back { font-size: 18px; color: var(--text-secondary); }
+    .sv-wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 120px; }
+    .sv-head { display: flex; gap: 14px; align-items: center; padding: 18px 0 14px; }
+    .sv-icon { width: 60px; height: 60px; border-radius: 20px; background: var(--grad-brand); display: flex; align-items: center; justify-content: center; font-size: 28px; flex: 0 0 auto; }
+    .sv-info { flex: 1; min-width: 0; }
+    .sv-name { font-size: 18px; font-weight: 800; font-family: 'Sora', sans-serif; }
+    .sv-desc { font-size: 12.5px; color: var(--text-secondary); margin-top: 3px; }
+    .sv-count { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+    .sv-join { height: 34px; padding: 0 16px; border-radius: var(--radius-pill); font-size: 12.5px; font-weight: 700; background: var(--grad-brand); color: #fff; }
+    .sv-join.joined { background: rgba(255,255,255,0.05); border: 1px solid var(--line-strong); color: var(--text-secondary); }
+
+    .sv-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line-soft); margin-bottom: 14px; }
+    .sv-tab { flex: 1; padding: 11px 0; font-size: 13px; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid transparent; }
+    .sv-tab.active { color: var(--text-primary); border-bottom-color: #8b7bff; }
+    .sv-panel { display: none; }
+    .sv-panel.active { display: block; }
+
+    .sv-compose, .sv-post { padding: 14px; margin-bottom: 12px; }
+    .sv-compose textarea, .sv-cinput input, .sv-chat-bar input {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--line-soft);
+      border-radius: var(--radius-md); color: var(--text-primary); font: inherit; font-size: 14px;
+      padding: 12px 14px; outline: none;
+    }
+    .sv-compose textarea { min-height: 70px; resize: vertical; }
+    .sv-compose .actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .sv-btn { height: 34px; padding: 0 18px; border-radius: var(--radius-pill); background: var(--grad-brand); color: #fff; font-size: 12.5px; font-weight: 700; }
+    .sv-btn:disabled { opacity: .5; }
+
+    .sv-author { display: flex; align-items: center; gap: 10px; }
+    .sv-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--grad-brand); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex: 0 0 auto; }
+    .sv-aname { font-size: 13.5px; font-weight: 700; }
+    .sv-time { font-size: 11px; color: var(--text-muted); }
+    .sv-del { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+    .sv-text { font-size: 14px; line-height: 1.5; margin: 10px 0; white-space: pre-wrap; word-break: break-word; }
+    .sv-actions { display: flex; gap: 18px; padding-top: 8px; border-top: 1px solid var(--line-soft); }
+    .sv-actions button { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+    .sv-actions button.liked { color: #ff6b9a; }
+
+    .sv-comments { margin-top: 10px; display: none; }
+    .sv-comments.open { display: block; }
+    .sv-comment { display: flex; gap: 8px; margin-bottom: 8px; }
+    .sv-comment .sv-avatar { width: 28px; height: 28px; font-size: 11px; }
+    .sv-cbubble { background: rgba(255,255,255,0.05); border-radius: 14px; padding: 8px 12px; font-size: 13px; min-width: 0; word-break: break-word; }
+    .sv-cbubble b { display: block; font-size: 12px; margin-bottom: 2px; }
+    .sv-cinput { display: flex; gap: 8px; margin-top: 8px; }
+    .sv-cinput input { padding: 9px 12px; font-size: 13px; }
+
+    .sv-chat { display: flex; flex-direction: column; gap: 8px; min-height: 260px; padding-bottom: 8px; }
+    .sv-msg { max-width: 78%; padding: 9px 13px; border-radius: 16px; background: rgba(255,255,255,0.06); font-size: 13.5px; word-break: break-word; align-self: flex-start; }
+    .sv-msg.me { align-self: flex-end; background: var(--grad-brand); color: #fff; }
+    .sv-msg small { display: block; font-size: 10.5px; opacity: .7; margin-bottom: 2px; }
+    .sv-chat-bar { position: fixed; left: 0; right: 0; bottom: calc(64px + var(--safe-bottom)); padding: 10px 16px; background: var(--bg-surface); border-top: 1px solid var(--line-soft); display: none; gap: 8px; max-width: 560px; margin: 0 auto; }
+    .sv-chat-bar.show { display: flex; }
+
+    .sv-member { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size: 13.5px; }
+    .sv-empty, .sv-lock { text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 0; }
+  </style>
+</head>
+<body>
+  <div class="bg-cosmic"></div>
+
+  <header class="top-bar sv-top">
+    <a href="spaces.html" class="back" aria-label="Back" style="font-size:18px;color:var(--text-secondary)">←</a>
+    <span style="font-size:16px;font-weight:700" id="topTitle">Space</span>
+    <span style="width:18px"></span>
+  </header>
+
+  <main class="page">
+    <div class="sv-wrap">
+      <div class="sv-head">
+        <div class="sv-icon" id="svIcon">🪐</div>
+        <div class="sv-info">
+          <div class="sv-name" id="svName">Loading…</div>
+          <div class="sv-desc" id="svDesc"></div>
+          <div class="sv-count" id="svCount"></div>
+        </div>
+        <button class="sv-join" id="svJoin" style="display:none">Join</button>
+      </div>
+
+      <div class="sv-tabs">
+        <button class="sv-tab active" data-tab="posts">Posts</button>
+        <button class="sv-tab" data-tab="chat">Chat</button>
+        <button class="sv-tab" data-tab="members">Members</button>
+      </div>
+
+      <section class="sv-panel active" id="panel-posts">
+        <div class="card sv-compose" id="composer" style="display:none">
+          <textarea id="postText" maxlength="1000" placeholder="Share something with this space…"></textarea>
+          <div class="actions"><button class="sv-btn" id="postBtn">Post</button></div>
+        </div>
+        <p class="sv-lock" id="postLock" style="display:none">Join this space to post and comment.</p>
+        <div id="postList"></div>
+        <p class="sv-empty" id="postEmpty" style="display:none">No posts yet. Start the conversation.</p>
+      </section>
+
+      <section class="sv-panel" id="panel-chat">
+        <div class="sv-chat" id="chatList"></div>
+        <p class="sv-lock" id="chatLock" style="display:none">Join this space to chat.</p>
+      </section>
+
+      <section class="sv-panel" id="panel-members">
+        <div id="memberList"></div>
+      </section>
+    </div>
+  </main>
+
+  <div class="sv-chat-bar" id="chatBar">
+    <input type="text" id="chatInput" maxlength="500" placeholder="Message the space…" />
+    <button class="sv-btn" id="chatSend">Send</button>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="home.html" data-page="home">Home</a>
+    <a href="explore.html" data-page="explore">Explore</a>
+    <a href="create-pulse.html" class="nav-fab" aria-label="Create pulse">+</a>
+    <a href="spaces.html" data-page="spaces" class="active">Spaces</a>
+    <a href="profile.html" data-page="profile">Profile</a>
+  </nav>
+
+  <script type="module">
+    import {
+      db, doc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove,
+      collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, increment,
+    } from './js/firebase-init.js';
+    import { requireAuth, setActiveNav, showToast } from './js/app.js';
+
+    setActiveNav('spaces');
+    const spaceId = new URLSearchParams(location.search).get('id');
+    if (!spaceId) location.replace('spaces.html');
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
+    const initial = (n) => (n || '?').trim().charAt(0).toUpperCase();
+    const timeAgo = (ts) => {
+      if (!ts || !ts.toDate) return 'just now';
+      const s = Math.floor((Date.now() - ts.toDate().getTime()) / 1000);
+      if (s < 60) return 'just now';
+      if (s < 3600) return Math.floor(s / 60) + 'm ago';
+      if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+      return ts.toDate().toLocaleDateString();
+    };
+
+    let user = null, userName = 'Member', isMember = false, space = null;
+    const openComments = new Set();
+    const commentUnsubs = {};
+
+    // Tabs
+    document.querySelectorAll('.sv-tab').forEach((t) => t.addEventListener('click', () => {
+      document.querySelectorAll('.sv-tab').forEach((x) => x.classList.toggle('active', x === t));
+      document.querySelectorAll('.sv-panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + t.dataset.tab));
+      updateChatBar();
+    }));
+
+    function updateChatBar() {
+      const onChat = document.querySelector('.sv-tab.active').dataset.tab === 'chat';
+      $('chatBar').classList.toggle('show', onChat && isMember);
+      $('chatLock').style.display = onChat && !isMember ? 'block' : 'none';
+    }
+
+    // Space header + membership
+    function watchSpace() {
+      onSnapshot(doc(db, 'spaces', spaceId), (snap) => {
+        if (!snap.exists()) { showToast('This space no longer exists.'); location.replace('spaces.html'); return; }
+        space = snap.data();
+        const members = Array.isArray(space.members) ? space.members : [];
+        isMember = members.includes(user.uid);
+        $('svIcon').textContent = space.icon || '🪐';
+        $('svName').textContent = space.name || 'Untitled Space';
+        $('topTitle').textContent = space.name || 'Space';
+        $('svDesc').textContent = space.description || '';
+        $('svCount').textContent = members.length + ' member' + (members.length === 1 ? '' : 's');
+        const j = $('svJoin');
+        j.style.display = 'inline-block';
+        j.textContent = isMember ? 'Joined' : 'Join';
+        j.classList.toggle('joined', isMember);
+        $('composer').style.display = isMember ? 'block' : 'none';
+        $('postLock').style.display = isMember ? 'none' : 'block';
+        updateChatBar();
+        renderMembers(members);
+      });
+    }
+
+    $('svJoin').addEventListener('click', async () => {
+      try {
+        await updateDoc(doc(db, 'spaces', spaceId), {
+          members: isMember ? arrayRemove(user.uid) : arrayUnion(user.uid),
+        });
+      } catch (e) { console.error(e); showToast('Could not update membership.'); }
+    });
+
+    async function renderMembers(ids) {
+      const box = $('memberList');
+      box.innerHTML = ids.map((id) => `
+        <div class="sv-member"><div class="sv-avatar">${id === user.uid ? initial(userName) : '👤'}</div>
+        <span>${id === user.uid ? 'You' : 'Member'}${id === space.createdBy ? ' · Admin' : ''}</span></div>`).join('');
+    }
+
+    // Posts
+    function watchPosts() {
+      const q = query(collection(db, 'spaces', spaceId, 'posts'), orderBy('createdAt', 'desc'));
+      onSnapshot(q, (snap) => {
+        const list = $('postList');
+        list.innerHTML = '';
+        $('postEmpty').style.display = snap.empty ? 'block' : 'none';
+        Object.values(commentUnsubs).forEach((u) => u());
+        for (const k in commentUnsubs) delete commentUnsubs[k];
+        snap.forEach((d) => list.appendChild(renderPost(d.id, d.data())));
+      }, (e) => { console.error(e); showToast('Could not load posts.'); });
+    }
+
+    function renderPost(id, p) {
+      const likes = Array.isArray(p.likes) ? p.likes : [];
+      const liked = likes.includes(user.uid);
+      const mine = p.authorId === user.uid || space.createdBy === user.uid;
+      const el = document.createElement('div');
+      el.className = 'card sv-post';
+      el.innerHTML = `
+        <div class="sv-author">
+          <div class="sv-avatar">${esc(initial(p.authorName))}</div>
+          <div><div class="sv-aname">${esc(p.authorName || 'Member')}</div><div class="sv-time">${timeAgo(p.createdAt)}</div></div>
+          ${mine ? '<button class="sv-del" data-act="del">Delete</button>' : ''}
+        </div>
+        <div class="sv-text">${esc(p.text)}</div>
+        <div class="sv-actions">
+          <button class="${liked ? 'liked' : ''}" data-act="like">${liked ? '♥' : '♡'} ${likes.length}</button>
+          <button data-act="cmt">💬 <span class="cc">${p.commentCount || 0}</span></button>
+        </div>
+        <div class="sv-comments ${openComments.has(id) ? 'open' : ''}">
+          <div class="clist"></div>
+          ${isMember ? '<div class="sv-cinput"><input type="text" maxlength="300" placeholder="Write a comment…" /><button class="sv-btn" data-act="send">Send</button></div>' : ''}
+        </div>`;
+
+      const box = el.querySelector('.sv-comments');
+      if (openComments.has(id)) watchComments(id, el);
+
+      el.addEventListener('click', async (e) => {
+        const act = e.target.closest('[data-act]')?.dataset.act;
+        if (!act) return;
+        const ref = doc(db, 'spaces', spaceId, 'posts', id);
+        try {
+          if (act === 'like') {
+            if (!isMember) return showToast('Join the space to like posts.');
+            await updateDoc(ref, { likes: liked ? arrayRemove(user.uid) : arrayUnion(user.uid) });
+          } else if (act === 'del') {
+            if (confirm('Delete this post?')) await deleteDoc(ref);
+          } else if (act === 'cmt') {
+            if (openComments.has(id)) { openComments.delete(id); box.classList.remove('open'); commentUnsubs[id]?.(); }
+            else { openComments.add(id); box.classList.add('open'); watchComments(id, el); }
+          } else if (act === 'send') {
+            const input = box.querySelector('input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            await addDoc(collection(ref, 'comments'), { text, authorId: user.uid, authorName: userName, createdAt: serverTimestamp() });
+            await updateDoc(ref, { commentCount: increment(1) });
+          }
+        } catch (err) { console.error(err); showToast('Something went wrong. Try again.'); }
+      });
+      return el;
+    }
+
+    function watchComments(postId, el) {
+      commentUnsubs[postId]?.();
+      const q = query(collection(db, 'spaces', spaceId, 'posts', postId, 'comments'), orderBy('createdAt', 'asc'));
+      commentUnsubs[postId] = onSnapshot(q, (snap) => {
+        const list = el.querySelector('.clist');
+        list.innerHTML = '';
+        snap.forEach((d) => {
+          const c = d.data();
+          const row = document.createElement('div');
+          row.className = 'sv-comment';
+          row.innerHTML = `<div class="sv-avatar">${esc(initial(c.authorName))}</div>
+            <div class="sv-cbubble"><b>${esc(c.authorName || 'Member')}</b>${esc(c.text)}</div>`;
+          list.appendChild(row);
+        });
+      });
+    }
+
+    $('postBtn').addEventListener('click', async () => {
+      const text = $('postText').value.trim();
+      if (!text) return showToast('Write something first.');
+      const btn = $('postBtn');
+      btn.disabled = true;
+      try {
+        await addDoc(collection(db, 'spaces', spaceId, 'posts'), {
+          text, authorId: user.uid, authorName: userName,
+          likes: [], commentCount: 0, createdAt: serverTimestamp(),
+        });
+        $('postText').value = '';
+      } catch (e) { console.error(e); showToast('Could not publish post.'); }
+      finally { btn.disabled = false; }
+    });
+
+    // Chat
+    function watchChat() {
+      const q = query(collection(db, 'spaces', spaceId, 'messages'), orderBy('createdAt', 'asc'));
+      onSnapshot(q, (snap) => {
+        const list = $('chatList');
+        list.innerHTML = '';
+        snap.forEach((d) => {
+          const m = d.data();
+          const me = m.authorId === user.uid;
+          const el = document.createElement('div');
+          el.className = 'sv-msg' + (me ? ' me' : '');
+          el.innerHTML = `${me ? '' : `<small>${esc(m.authorName || 'Member')}</small>`}${esc(m.text)}`;
+          list.appendChild(el);
+        });
+        if (!snap.empty) list.lastElementChild.scrollIntoView({ block: 'end' });
+      });
+    }
+
+    async function sendChat() {
+      const input = $('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      try {
+        await addDoc(collection(db, 'spaces', spaceId, 'messages'), {
+          text, authorId: user.uid, authorName: userName, createdAt: serverTimestamp(),
+        });
+      } catch (e) { console.error(e); showToast('Message not sent.'); input.value = text; }
+    }
+    $('chatSend').addEventListener('click', sendChat);
+    $('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+
+    (async () => {
+      user = await requireAuth();
+      if (!user) return;
+      userName = user.displayName || (user.email ? user.email.split('@')[0] : 'Member');
+      watchSpace();
+      watchPosts();
+      watchChat();
+    })();
+  </script>
+</body>
+</html>
