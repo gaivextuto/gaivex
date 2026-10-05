@@ -20,6 +20,7 @@ import {
   signOut,
   updateProfile,
   deleteUser,
+  sendEmailVerification,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore,
@@ -39,6 +40,7 @@ import {
   arrayUnion,
   arrayRemove,
   increment,
+  runTransaction,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import {
   getStorage,
@@ -73,6 +75,7 @@ export {
   signOut,
   updateProfile,
   deleteUser,
+  sendEmailVerification,
   doc,
   setDoc,
   getDoc,
@@ -89,6 +92,7 @@ export {
   arrayUnion,
   arrayRemove,
   increment,
+  runTransaction,
   storageRef,
   uploadBytes,
   getDownloadURL,
