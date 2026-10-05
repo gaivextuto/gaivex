@@ -21,150 +21,88 @@
       flex-direction: column;
       padding: 20px 24px calc(32px + var(--safe-bottom));
     }
-
     .auth-close {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
+      width: 36px; height: 36px; border-radius: 50%;
       background: rgba(255,255,255,0.05);
       border: 1px solid var(--line-soft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: var(--text-secondary);
       align-self: flex-start;
     }
+    .auth-head { margin-top: 28px; margin-bottom: 28px; }
+    .auth-head h1 { font-size: 26px; font-weight: 800; }
+    .auth-head p { margin-top: 6px; color: var(--text-secondary); font-size: 14px; }
 
-    .auth-head {
-      margin-top: 28px;
-      margin-bottom: 28px;
-    }
-    .auth-head h1 {
-      font-size: 26px;
-      font-weight: 800;
-    }
-    .auth-head p {
-      margin-top: 6px;
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-
-    /* Mode switch: Sign Up / Log In */
     .mode-switch {
-      display: flex;
-      padding: 4px;
-      border-radius: var(--radius-pill);
+      display: flex; padding: 4px; border-radius: var(--radius-pill);
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--line-soft);
       margin-bottom: 24px;
     }
     .mode-switch button {
-      flex: 1;
-      height: 40px;
-      border-radius: var(--radius-pill);
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--text-secondary);
+      flex: 1; height: 40px; border-radius: var(--radius-pill);
+      font-size: 13.5px; font-weight: 600; color: var(--text-secondary);
       transition: background 0.2s ease, color 0.2s ease;
     }
-    .mode-switch button.active {
-      background: var(--grad-brand);
-      color: #fff;
-    }
+    .mode-switch button.active { background: var(--grad-brand); color: #fff; }
 
-    .field {
-      margin-bottom: 14px;
-    }
-    .field label {
-      display: block;
-      font-size: 12.5px;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-    }
-    .field input {
-      width: 100%;
-      height: 50px;
-      border-radius: var(--radius-md);
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 6px; }
+    .field input, .field select {
+      width: 100%; height: 50px; border-radius: var(--radius-md);
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--line-soft);
       color: var(--text-primary);
-      font-size: 14.5px;
-      padding: 0 16px;
-      outline: none;
+      font-size: 14.5px; padding: 0 16px; outline: none;
       transition: border-color 0.15s ease;
+      font-family: inherit;
     }
+    .field select option { background: #10142c; color: #f4f5ff; }
     .field input::placeholder { color: var(--text-muted); }
-    .field input:focus { border-color: var(--violet); }
+    .field input:focus, .field select:focus { border-color: var(--violet); }
+    .field-2 { display: flex; gap: 12px; }
+    .field-2 .field { flex: 1; min-width: 0; }
+    .hint { font-size: 11.5px; margin-top: 5px; min-height: 14px; color: var(--text-muted); }
+    .hint.ok { color: #4ade80; }
+    .hint.bad { color: #fda4af; }
+    .handle-wrap { position: relative; }
+    .handle-wrap span {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-size: 14.5px;
+    }
+    .handle-wrap input { padding-left: 32px; }
 
-    .field-row {
-      display: flex;
-      justify-content: flex-end;
-      margin: -6px 0 18px;
-    }
-    .field-row button {
-      font-size: 12.5px;
-      color: var(--cyan);
-      font-weight: 600;
-    }
+    .field-row { display: flex; justify-content: flex-end; margin: -6px 0 18px; }
+    .field-row button { font-size: 12.5px; color: var(--cyan); font-weight: 600; }
 
     .auth-error {
-      display: none;
-      font-size: 12.5px;
-      color: #fda4af;
+      display: none; font-size: 12.5px; color: #fda4af;
       background: rgba(244, 63, 94, 0.1);
       border: 1px solid rgba(244, 63, 94, 0.3);
-      border-radius: var(--radius-sm);
-      padding: 10px 14px;
-      margin-bottom: 16px;
+      border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 16px;
+    }
+    .auth-error button { color: var(--cyan); font-weight: 600; margin-left: 6px; }
+    .auth-info {
+      display: none; font-size: 13px; color: #86efac;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px; line-height: 1.5;
     }
 
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 24px 0 18px;
-      color: var(--text-muted);
-      font-size: 12px;
-    }
-    .divider::before, .divider::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: var(--line-soft);
-    }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 18px; color: var(--text-muted); font-size: 12px; }
+    .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
 
-    .social-row {
-      display: flex;
-      gap: 12px;
-    }
+    .social-row { display: flex; gap: 12px; }
     .social-btn {
-      flex: 1;
-      height: 48px;
-      border-radius: var(--radius-md);
+      flex: 1; height: 48px; border-radius: var(--radius-md);
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--line-soft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--text-primary);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-size: 13.5px; font-weight: 600; color: var(--text-primary);
     }
 
-    .auth-foot {
-      margin-top: auto;
-      padding-top: 24px;
-      text-align: center;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-    .auth-foot button {
-      color: var(--cyan);
-      font-weight: 600;
-    }
-
+    .auth-foot { margin-top: auto; padding-top: 24px; text-align: center; font-size: 13px; color: var(--text-secondary); }
+    .auth-foot button { color: var(--cyan); font-weight: 600; }
     .btn[disabled] { opacity: 0.6; pointer-events: none; }
   </style>
 </head>
@@ -185,12 +123,57 @@
       <button type="button" id="tab-signup" role="tab" aria-selected="false">Sign Up</button>
     </div>
 
+    <p class="auth-info" id="authInfo"></p>
     <p class="auth-error" id="authError"></p>
 
     <form id="authForm" novalidate>
-      <div class="field" id="fieldUsername" style="display:none;">
-        <label for="username">Username</label>
-        <input type="text" id="username" placeholder="yourdisplayname" autocomplete="nickname" />
+      <div id="signupFields" style="display:none;">
+        <div class="field-2">
+          <div class="field">
+            <label for="firstName">First name</label>
+            <input type="text" id="firstName" placeholder="First name" autocomplete="given-name" maxlength="30" />
+          </div>
+          <div class="field">
+            <label for="lastName">Last name</label>
+            <input type="text" id="lastName" placeholder="Last name" autocomplete="family-name" maxlength="30" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="handle">Username</label>
+          <div class="handle-wrap">
+            <span>@</span>
+            <input type="text" id="handle" placeholder="yourname" autocomplete="off" autocapitalize="none" maxlength="20" />
+          </div>
+          <div class="hint" id="handleHint">3–20 characters: a–z, 0–9, _ and .</div>
+        </div>
+
+        <div class="field-2">
+          <div class="field">
+            <label for="birthDate">Date of birth</label>
+            <input type="date" id="birthDate" />
+          </div>
+          <div class="field">
+            <label for="gender">Gender</label>
+            <select id="gender">
+              <option value="">Select</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="private">Prefer not to say</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone (optional)</label>
+          <input type="tel" id="phone" placeholder="+8801XXXXXXXXX" autocomplete="tel" />
+        </div>
+
+        <div class="field">
+          <label for="city">City / Country (optional)</label>
+          <input type="text" id="city" placeholder="Dhaka, Bangladesh" autocomplete="address-level2" maxlength="60" />
+        </div>
       </div>
 
       <div class="field">
@@ -231,33 +214,31 @@
     import {
       auth, googleProvider, db,
       signInWithEmailAndPassword, createUserWithEmailAndPassword,
-      signInWithPopup, updateProfile, doc, setDoc, getDoc,
+      signInWithPopup, updateProfile, signOut, deleteUser,
+      sendEmailVerification, runTransaction, doc, getDoc,
     } from './js/firebase-init.js';
     import { redirectIfLoggedIn, markOnboarded, showToast, HOME_PAGE } from './js/app.js';
 
     redirectIfLoggedIn();
 
+    const $ = (id) => document.getElementById(id);
     const els = {
-      tabLogin: document.getElementById('tab-login'),
-      tabSignup: document.getElementById('tab-signup'),
-      headline: document.getElementById('headline'),
-      subhead: document.getElementById('subhead'),
-      fieldUsername: document.getElementById('fieldUsername'),
-      username: document.getElementById('username'),
-      email: document.getElementById('email'),
-      password: document.getElementById('password'),
-      form: document.getElementById('authForm'),
-      submitBtn: document.getElementById('submitBtn'),
-      error: document.getElementById('authError'),
-      footText: document.getElementById('footText'),
-      footSwitch: document.getElementById('footSwitch'),
-      forgotRow: document.getElementById('forgotRow'),
-      forgotBtn: document.getElementById('forgotBtn'),
-      googleBtn: document.getElementById('googleBtn'),
-      appleBtn: document.getElementById('appleBtn'),
+      tabLogin: $('tab-login'), tabSignup: $('tab-signup'),
+      headline: $('headline'), subhead: $('subhead'),
+      signupFields: $('signupFields'),
+      firstName: $('firstName'), lastName: $('lastName'), handle: $('handle'), handleHint: $('handleHint'),
+      birthDate: $('birthDate'), gender: $('gender'), phone: $('phone'), city: $('city'),
+      email: $('email'), password: $('password'),
+      form: $('authForm'), submitBtn: $('submitBtn'),
+      error: $('authError'), info: $('authInfo'),
+      footText: $('footText'), footSwitch: $('footSwitch'),
+      forgotRow: $('forgotRow'), forgotBtn: $('forgotBtn'),
+      googleBtn: $('googleBtn'), appleBtn: $('appleBtn'),
     };
 
-    let mode = 'login'; // or 'signup'
+    const HANDLE_RE = /^[a-z0-9_.]{3,20}$/;
+    let mode = 'login';
+    let pendingUnverified = null;
 
     function setMode(next) {
       mode = next;
@@ -266,8 +247,8 @@
       els.tabSignup.classList.toggle('active', isSignup);
       els.tabLogin.setAttribute('aria-selected', String(!isSignup));
       els.tabSignup.setAttribute('aria-selected', String(isSignup));
-      els.fieldUsername.style.display = isSignup ? 'block' : 'none';
-      els.username.required = isSignup;
+      els.signupFields.style.display = isSignup ? 'block' : 'none';
+      els.password.autocomplete = isSignup ? 'new-password' : 'current-password';
       els.forgotRow.style.display = isSignup ? 'none' : 'flex';
       els.headline.textContent = isSignup ? 'Create your account' : 'Welcome to GAIVEX';
       els.subhead.textContent = isSignup ? 'Join the universe — it takes a minute.' : 'Your universe begins here.';
@@ -276,21 +257,30 @@
       els.footSwitch.textContent = isSignup ? 'Log In' : 'Sign Up';
       hideError();
     }
-
     els.tabLogin.addEventListener('click', () => setMode('login'));
     els.tabSignup.addEventListener('click', () => setMode('signup'));
     els.footSwitch.addEventListener('click', () => setMode(mode === 'login' ? 'signup' : 'login'));
 
-    function showError(msg) {
+    function showError(msg, withResend = false) {
+      els.info.style.display = 'none';
       els.error.textContent = msg;
+      if (withResend) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = 'Resend email';
+        b.addEventListener('click', resendVerification);
+        els.error.appendChild(b);
+      }
       els.error.style.display = 'block';
     }
-    function hideError() {
-      els.error.style.display = 'none';
+    function hideError() { els.error.style.display = 'none'; }
+    function showInfo(msg) {
+      hideError();
+      els.info.textContent = msg;
+      els.info.style.display = 'block';
     }
 
     function friendlyAuthError(err) {
-      const code = err?.code || '';
       const map = {
         'auth/invalid-email': 'That email address looks invalid.',
         'auth/user-not-found': 'No account found with that email.',
@@ -302,40 +292,104 @@
         'auth/network-request-failed': 'Network error — check your connection.',
         'auth/popup-closed-by-user': 'Sign-in was cancelled.',
       };
-      return map[code] || 'Something went wrong. Please try again.';
+      return map[err?.code] || 'Something went wrong. Please try again.';
     }
 
-    /** Ensures a users/{uid} Firestore profile exists (created on first sign-in). */
-    async function ensureUserProfile(user, extra = {}) {
-      const ref = doc(db, 'users', user.uid);
-      const snap = await getDoc(ref);
-      if (!snap.exists()) {
-        await setDoc(ref, {
+    // ---------- @username helpers ----------
+    async function isHandleFree(h) {
+      const snap = await getDoc(doc(db, 'usernames', h));
+      return !snap.exists();
+    }
+
+    let handleTimer = null;
+    els.handle.addEventListener('input', () => {
+      els.handle.value = els.handle.value.toLowerCase().replace(/^@/, '').replace(/[^a-z0-9_.]/g, '');
+      const h = els.handle.value;
+      clearTimeout(handleTimer);
+      els.handleHint.className = 'hint';
+      if (!h) { els.handleHint.textContent = '3–20 characters: a–z, 0–9, _ and .'; return; }
+      if (!HANDLE_RE.test(h)) { els.handleHint.textContent = 'Use 3–20 characters: a–z, 0–9, _ and .'; els.handleHint.classList.add('bad'); return; }
+      els.handleHint.textContent = 'Checking…';
+      handleTimer = setTimeout(async () => {
+        try {
+          const free = await isHandleFree(h);
+          if (els.handle.value !== h) return;
+          els.handleHint.textContent = free ? `@${h} is available ✓` : `@${h} is already taken`;
+          els.handleHint.className = 'hint ' + (free ? 'ok' : 'bad');
+        } catch { els.handleHint.textContent = ''; }
+      }, 400);
+    });
+
+    /** Atomically reserves the @handle and writes users/{uid}. Throws 'handle-taken' if someone got it first. */
+    async function claimHandleAndCreateProfile(user, handle, data) {
+      await runTransaction(db, async (tx) => {
+        const hRef = doc(db, 'usernames', handle);
+        if ((await tx.get(hRef)).exists()) throw new Error('handle-taken');
+        tx.set(hRef, { uid: user.uid });
+        tx.set(doc(db, 'users', user.uid), {
           uid: user.uid,
-          username: extra.username || user.displayName || user.email.split('@')[0],
+          handle,
           email: user.email,
           photoURL: user.photoURL || '',
           bio: '',
           createdAt: Date.now(),
-          followers: [],
-          following: [],
-          friends: [],
-          friendRequests: [],
+          followers: [], following: [], friends: [], friendRequests: [],
+          ...data,
         });
+      });
+    }
+
+    async function makeAutoHandle(seed) {
+      let base = (seed || 'user').toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 14);
+      if (base.length < 3) base = 'user' + base;
+      for (let i = 0; i < 6; i++) {
+        const cand = i === 0 ? base : base + Math.floor(1000 + Math.random() * 9000);
+        if (await isHandleFree(cand)) return cand;
+      }
+      return 'user' + Date.now().toString().slice(-9);
+    }
+
+    async function resendVerification() {
+      if (!pendingUnverified) return;
+      try {
+        await sendEmailVerification(pendingUnverified);
+        await signOut(auth);
+        pendingUnverified = null;
+        showInfo('Verification email sent again. Check your inbox (and Spam folder).');
+      } catch (err) {
+        showError(friendlyAuthError(err));
       }
     }
 
+    // ---------- Submit ----------
     els.form.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideError();
 
       const email = els.email.value.trim();
       const password = els.password.value;
-      const username = els.username.value.trim();
 
-      if (mode === 'signup' && username.length < 2) {
-        showError('Please choose a username with at least 2 characters.');
-        return;
+      let profile = null;
+      if (mode === 'signup') {
+        const firstName = els.firstName.value.trim();
+        const lastName = els.lastName.value.trim();
+        const handle = els.handle.value.trim().toLowerCase();
+        const birthDate = els.birthDate.value;
+        const gender = els.gender.value;
+
+        if (!firstName || !lastName) return showError('Please enter your first and last name.');
+        if (!HANDLE_RE.test(handle)) return showError('Username must be 3–20 characters: a–z, 0–9, _ or .');
+        if (!birthDate) return showError('Please enter your date of birth.');
+        const age = (Date.now() - new Date(birthDate).getTime()) / 31557600000;
+        if (!(age >= 13)) return showError('You must be at least 13 years old to join.');
+        if (!gender) return showError('Please select your gender.');
+        if (password.length < 6) return showError('Password should be at least 6 characters.');
+
+        profile = {
+          handle, firstName, lastName, birthDate, gender,
+          phone: els.phone.value.trim(),
+          city: els.city.value.trim(),
+        };
       }
 
       els.submitBtn.disabled = true;
@@ -344,39 +398,71 @@
 
       try {
         if (mode === 'signup') {
+          if (!(await isHandleFree(profile.handle))) {
+            throw Object.assign(new Error('taken'), { custom: `@${profile.handle} is already taken. Please choose another username.` });
+          }
+          const fullName = `${profile.firstName} ${profile.lastName}`;
           const cred = await createUserWithEmailAndPassword(auth, email, password);
-          await updateProfile(cred.user, { displayName: username });
-          await ensureUserProfile(cred.user, { username });
+          try {
+            await updateProfile(cred.user, { displayName: fullName });
+            // `username` = full display name (other pages already use this field); `handle` = @username
+            await claimHandleAndCreateProfile(cred.user, profile.handle, { ...profile, username: fullName });
+          } catch (inner) {
+            await deleteUser(cred.user).catch(() => {});
+            throw Object.assign(inner, {
+              custom: inner.message === 'handle-taken'
+                ? `@${profile.handle} was just taken. Please choose another username.`
+                : 'Could not create your profile. Please try again.',
+            });
+          }
+          await sendEmailVerification(cred.user);
+          await signOut(auth);
+          setMode('login');
+          els.email.value = email;
+          els.password.value = '';
+          showInfo(`We sent a verification link to ${email}. Open it, then log in here. Check Spam if you can't find it.`);
         } else {
-          await signInWithEmailAndPassword(auth, email, password);
+          const cred = await signInWithEmailAndPassword(auth, email, password);
+          if (!cred.user.emailVerified) {
+            pendingUnverified = cred.user;
+            showError('Please verify your email first — check your inbox for the link.', true);
+          } else {
+            markOnboarded();
+            window.location.replace(HOME_PAGE);
+            return;
+          }
+        }
+      } catch (err) {
+        showError(err.custom || friendlyAuthError(err));
+      }
+      els.submitBtn.disabled = false;
+      els.submitBtn.textContent = mode === 'signup' ? 'Create account →' : 'Continue →';
+    });
+
+    // ---------- Google ----------
+    els.googleBtn.addEventListener('click', async () => {
+      try {
+        const cred = await signInWithPopup(auth, googleProvider);
+        const user = cred.user;
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (!snap.exists()) {
+          const handle = await makeAutoHandle(user.email.split('@')[0]);
+          const parts = (user.displayName || '').trim().split(/\s+/);
+          await claimHandleAndCreateProfile(user, handle, {
+            username: user.displayName || user.email.split('@')[0],
+            firstName: parts[0] || '',
+            lastName: parts.slice(1).join(' '),
+          });
         }
         markOnboarded();
         window.location.replace(HOME_PAGE);
       } catch (err) {
         showError(friendlyAuthError(err));
-        els.submitBtn.disabled = false;
-        els.submitBtn.textContent = originalLabel;
       }
     });
 
-    els.googleBtn.addEventListener('click', async () => {
-      try {
-        const cred = await signInWithPopup(auth, googleProvider);
-        await ensureUserProfile(cred.user);
-        markOnboarded();
-        window.location.replace(HOME_PAGE);
-      } catch (err) {
-        showError(friendlyAuthError(err));
-      }
-    });
-
-    els.appleBtn.addEventListener('click', () => {
-      showToast('Apple sign-in is coming soon.');
-    });
-
-    els.forgotBtn.addEventListener('click', () => {
-      showToast('Password reset is coming soon — use Google sign-in for now.');
-    });
+    els.appleBtn.addEventListener('click', () => showToast('Apple sign-in is coming soon.'));
+    els.forgotBtn.addEventListener('click', () => showToast('Password reset is coming soon — use Google sign-in for now.'));
   </script>
 </body>
 </html>
