@@ -53,20 +53,28 @@ export function getAuthState() {
   });
 }
 
-/** Call at the top of any protected page. Redirects to auth.html if not logged in. */
+/**
+ * Call at the top of any protected page.
+ * Redirects to auth.html if not logged in OR if the email is not verified yet.
+ */
 export async function requireAuth() {
   const user = await getAuthState();
   if (!user) {
     window.location.replace(AUTH_PAGE);
     return null;
   }
+  if (!user.emailVerified) {
+    await signOut(auth);
+    window.location.replace(AUTH_PAGE);
+    return null;
+  }
   return user;
 }
 
-/** Call at the top of auth.html / onboarding.html to bounce already-logged-in users home. */
+/** Call at the top of auth.html / onboarding.html to bounce already-logged-in (and verified) users home. */
 export async function redirectIfLoggedIn() {
   const user = await getAuthState();
-  if (user) {
+  if (user && user.emailVerified) {
     window.location.replace(HOME_PAGE);
   }
   return user;
