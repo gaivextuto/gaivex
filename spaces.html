@@ -31,7 +31,7 @@
 
     .sp-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 26px; }
 
-    .sp-card { padding: 14px; display: flex; align-items: center; gap: 12px; }
+    .sp-card { padding: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .sp-icon {
       width: 48px; height: 48px; border-radius: 16px;
       background: var(--grad-brand);
@@ -190,6 +190,11 @@
           ${joined ? 'Joined' : 'Join'}
         </button>
       `;
+      // কার্ডে ক্লিক করলে Space-এর ভেতরে যাবে (Join বাটন বাদে)
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.sp-join-btn')) return;
+        location.href = 'space.html?id=' + id;
+      });
       return card;
     }
 
