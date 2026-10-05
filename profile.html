@@ -589,7 +589,8 @@
         els.avatar.classList.toggle('own', isOwn);
         setAvatar(profile.photoURL || (isOwn ? currentUser.photoURL : ''), displayName);
         els.name.textContent = displayName;
-        els.handle.textContent = isOwn ? currentUser.email : (profile.email || '');
+        // Show @username (never expose email to other people)
+        els.handle.textContent = profile.handle ? '@' + profile.handle : (isOwn ? 'Set your @username in Settings' : '');
         els.bio.textContent = profile.bio || (isOwn ? 'Add a short bio to tell people about yourself.' : '');
         els.statFriends.textContent = Array.isArray(profile.friends) ? profile.friends.length : 0;
         els.statFollowers.textContent = Array.isArray(profile.followers) ? profile.followers.length : 0;
