@@ -17,26 +17,12 @@
 .icon-btn svg{width:18px;height:18px;stroke:var(--text-primary)}
 .badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--magenta);color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;box-shadow:0 0 6px var(--magenta)}
 .home-content{padding:16px;max-width:560px;margin:0 auto}
-.stories{display:flex;gap:14px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none}
-.stories::-webkit-scrollbar,.hrow::-webkit-scrollbar{display:none}
+.stories{display:flex;gap:14px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none;min-height:92px}
+.stories::-webkit-scrollbar{display:none}
 .story{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;width:66px}
 .story-ring{width:60px;height:60px;border-radius:50%;background:var(--grad-brand);padding:2.5px;display:flex;align-items:center;justify-content:center}
 .story-ring .story-avatar{width:100%;height:100%;border-radius:50%;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--text-primary);overflow:hidden;border:2px solid var(--bg-void)}
 .story-name{font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center}
-.story.add .story-ring{background:rgba(255,255,255,.06);border:1px dashed var(--line-strong)}
-.sec-title{font:700 14px Sora,sans-serif;margin:0 0 10px;color:var(--text-primary)}
-.hrow{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin-bottom:18px}
-.hrow:empty{display:none}
-.tcard{flex:0 0 140px;height:180px;border-radius:var(--radius-md);position:relative;overflow:hidden;background:var(--grad-brand);color:#fff;text-decoration:none}
-.tcard img,.tcard video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.tcard .tc-info{position:absolute;left:0;right:0;bottom:0;padding:22px 8px 8px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:11.5px}
-.tcard .tc-info b{display:block;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.tcard .tc-txt{position:absolute;inset:0;padding:10px;font-size:12.5px;line-height:1.4;overflow:hidden}
-.mini{flex:0 0 auto;min-width:200px;padding:12px;font-size:12.5px;color:var(--text-primary);text-decoration:none}
-.mini b{display:block;font-size:13px}
-.mini span{color:var(--text-muted);font-size:11.5px}
-.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b5c;margin-right:6px;animation:blink 1.2s infinite}
-@keyframes blink{50%{opacity:.3}}
 .composer{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:16px}
 .composer .story-avatar{width:38px;height:38px;border-radius:50%;background:var(--grad-warm);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:0 0 auto;overflow:hidden}
 .composer-text{flex:1;color:var(--text-muted);font-size:13.5px}
@@ -92,7 +78,7 @@
 .lightbox.open{display:flex}
 .lightbox img{max-width:100%;max-height:100%;object-fit:contain}
 .lightbox-close{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
-@media (prefers-reduced-motion:reduce){.burst,.skel,.live-dot{animation:none}}
+@media (prefers-reduced-motion:reduce){.burst,.skel{animation:none}}
 </style>
 </head>
 <body class="no-select">
@@ -107,16 +93,10 @@
 </header>
 
 <main class="page"><div class="home-content">
-  <div class="stories" id="stories">
-    <a href="profile.html" class="story add"><div class="story-ring"><div class="story-avatar" id="myAvatar">＋</div></div><span class="story-name">Your Space</span></a>
-  </div>
+  <!-- Stories are rendered here by js/stories.js -->
+  <div class="stories" id="stories"></div>
 
-  <div class="hrow" id="liveRow"></div>
-  <div class="hrow" id="eventRow"></div>
-
-  <div id="trendWrap" style="display:none"><h2 class="sec-title">✦ Trending Pulses</h2><div class="hrow" id="trending"></div></div>
-
-  <a href="create-pulse.html" class="composer card"><span class="story-avatar" id="composerAvatar">?</span><span class="composer-text">Share a pulse with your universe…</span></a>
+  <a href="create-pulse.html?type=post" class="composer card"><span class="story-avatar" id="composerAvatar">?</span><span class="composer-text">Share a pulse with your universe…</span></a>
 
   <div class="modes" id="modes">
     <button class="mode active" data-mode="foryou">For You</button>
@@ -135,7 +115,7 @@
 <nav class="bottom-nav">
   <a href="home.html" data-page="home" class="active"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg>Home</a>
   <a href="pulse.html" data-page="pulse"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none"/></svg>Pulse</a>
-  <a href="create-pulse.html" class="nav-fab" aria-label="Create pulse"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
+  <a href="create-pulse.html" class="nav-fab" aria-label="Create"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
   <a href="spaces.html" data-page="spaces"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Spaces</a>
   <a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</a>
 </nav>
@@ -145,10 +125,11 @@
 
 <script type="module">
 import {
-  doc, getDoc, db, collection, query, orderBy, where, limit, onSnapshot,
+  doc, db, collection, query, orderBy, limit, onSnapshot,
   updateDoc, arrayUnion, arrayRemove, deleteDoc, addDoc, serverTimestamp,
 } from './js/firebase-init.js';
 import { requireAuth, setActiveNav, showToast } from './js/app.js';
+import { initStories } from './js/stories.js';
 
 setActiveNav('home');
 // UI-level only. Real protection = Firestore Security Rules.
@@ -156,11 +137,11 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('copy', (e) => e.preventDefault());
 
 const $ = (id) => document.getElementById(id);
-const feedEl = $('feed'), storiesEl = $('stories'), emptyHint = $('emptyHint'), loadingHint = $('loadingHint'), moreBtn = $('moreBtn');
+const feedEl = $('feed'), emptyHint = $('emptyHint'), loadingHint = $('loadingHint'), moreBtn = $('moreBtn');
 const PAGE = 10;
 let currentUser = null, me = {}, mode = 'foryou', shown = PAGE;
 let blockedUids = [], postsList = [], reelsList = [];
-const nodes = new Map(); // id -> {el, sig}
+const nodes = new Map(); // id -> {el}
 
 /* ---------- Helpers ---------- */
 const initialsOf = (n) => (n || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -393,7 +374,7 @@ function renderPost(id, post) {
 
   const go = () => { location.href = `${pageOf(post)}.html?id=${id}`; };
   const img = a.querySelector('img.pulse-media');
-  if (img) tapHandler(img.parentElement, () => openLightbox(post.mediaURL), (e) => { burst(img.parentElement); if (!a.querySelector('.like-btn').classList.contains('liked')) toggleLike(id, post, a); });
+  if (img) tapHandler(img.parentElement, () => openLightbox(post.mediaURL), () => { burst(img.parentElement); if (!a.querySelector('.like-btn').classList.contains('liked')) toggleLike(id, post, a); });
 
   const vw = a.querySelector('.vwrap');
   if (vw) {
@@ -470,38 +451,6 @@ function renderFeed() {
   moreBtn.style.display = all.length > shown ? 'block' : 'none';
   emptyHint.textContent = EMPTY[mode];
   emptyHint.style.display = all.length ? 'none' : 'block';
-  renderStories(all); renderTrending();
-}
-
-function renderStories(all) {
-  storiesEl.querySelectorAll('.story:not(.add)').forEach((el) => el.remove());
-  const seen = new Set();
-  for (const d of all) {
-    const p = d.data;
-    if (!p.uid || seen.has(p.uid) || p.uid === currentUser.uid) continue;
-    seen.add(p.uid);
-    const a = document.createElement('a');
-    a.href = profileLink(p.uid); a.className = 'story';
-    a.innerHTML = `<div class="story-ring"><div class="story-avatar">${avatarInner(p.authorPhoto, p.authorName)}</div></div><span class="story-name">${esc(p.authorName || 'User')}</span>`;
-    storiesEl.appendChild(a);
-    if (seen.size >= 8) break;
-  }
-}
-
-function renderTrending() {
-  const cutoff = Date.now() - 48 * 36e5, hidden = getHidden();
-  const top = [...postsList, ...reelsList]
-    .filter((d) => ms(d.data.createdAt) > cutoff && !blockedUids.includes(d.data.uid) && !hidden.includes(d.id) && visibleTo(d.data) && (d.data.visibility || 'everyone') === 'everyone')
-    .map((d) => ({ d, s: (d.data.likes?.length || 0) + 2 * (d.data.commentsCount || 0) + 3 * (d.data.beamsCount || 0) + (d.data.views || 0) / 20 }))
-    .filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 6);
-  $('trendWrap').style.display = top.length ? 'block' : 'none';
-  $('trending').innerHTML = top.map(({ d }) => {
-    const p = d.data, v = p.mediaURL && isVideoPost(p);
-    const bg = v ? (p.thumbnailURL || vidPoster(p.mediaURL)) : p.mediaURL ? imgFeed(p.mediaURL) : '';
-    return `<a class="tcard" href="${pageOf(p)}.html?id=${d.id}">
-      ${bg ? `<img src="${esc(bg)}" alt="" loading="lazy" decoding="async" draggable="false" />` : `<div class="tc-txt">${esc((p.text || '').slice(0, 110))}</div>`}
-      <div class="tc-info"><b>${esc(p.authorName || 'GAIVEX user')}</b>♥ ${p.likes?.length || 0} · 💬 ${p.commentsCount || 0}</div></a>`;
-  }).join('');
 }
 
 /* ---------- Mode switcher + pagination ---------- */
@@ -529,24 +478,6 @@ function subscribeToFeed() {
   }, (err) => console.warn('Reels error:', err));
 }
 
-// Live + Events cards (optional collections; hidden when empty)
-function subscribeLiveEvents() {
-  onSnapshot(query(collection(db, 'lives'), where('active', '==', true), limit(8)), (snap) => {
-    const row = $('liveRow');
-    row.innerHTML = snap.empty
-      ? `<a href="live.html" class="card mini"><b><span class="live-dot"></span>Start a Live ✦</b><span>Go live with your universe</span></a>`
-      : snap.docs.map((d) => { const l = d.data();
-          return `<a href="live.html?id=${d.id}" class="card mini"><b><span class="live-dot"></span>LIVE NOW · ${esc(l.hostName || 'GAIVEX user')}</b><span>${l.viewersCount || 0} watching</span></a>`; }).join('');
-  }, () => { $('liveRow').innerHTML = `<a href="live.html" class="card mini"><b>🔴 Live</b><span>Watch or start a live</span></a>`; });
-
-  onSnapshot(query(collection(db, 'events'), orderBy('startAt', 'asc'), where('startAt', '>=', new Date()), limit(5)), (snap) => {
-    $('eventRow').innerHTML = snap.docs.map((d) => { const e = d.data();
-      const when = e.startAt?.toDate ? e.startAt.toDate().toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '';
-      return `<a href="events.html?id=${d.id}" class="card mini"><b>📅 ${esc(e.title || 'Event')}</b><span>${esc(when)} · ${e.goingCount || (e.going?.length || 0)} going</span></a>`; }).join('')
-      || `<a href="events.html" class="card mini"><b>📅 Events</b><span>Discover what is happening</span></a>`;
-  }, () => { $('eventRow').innerHTML = `<a href="events.html" class="card mini"><b>📅 Events</b><span>Discover what is happening</span></a>`; });
-}
-
 function setBadge(el, n) { el.textContent = n > 99 ? '99+' : n; el.style.display = n > 0 ? 'flex' : 'none'; }
 
 (async () => {
@@ -554,7 +485,6 @@ function setBadge(el, n) { el.textContent = n > 99 ? '99+' : n; el.style.display
   if (!user) return;
   currentUser = user;
   $('composerAvatar').innerHTML = avatarInner(user.photoURL, user.displayName || user.email);
-  $('myAvatar').innerHTML = user.photoURL ? avatarInner(user.photoURL, '') : '＋';
 
   try { const m = localStorage.getItem('gaivex_mode'); if (m && EMPTY[m]) { mode = m;
     document.querySelectorAll('.mode').forEach((b) => b.classList.toggle('active', b.dataset.mode === m)); } } catch {}
@@ -569,7 +499,7 @@ function setBadge(el, n) { el.textContent = n > 99 ? '99+' : n; el.style.display
   }, (err) => console.warn('Profile error:', err));
 
   subscribeToFeed();
-  subscribeLiveEvents();
+  initStories(user);   // stories row (js/stories.js)
 })();
 </script>
 </body>
