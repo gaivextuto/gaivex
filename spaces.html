@@ -63,7 +63,7 @@
     }
     .sp-sheet-backdrop.show { display: flex; }
     .sp-sheet {
-      width: 100%;
+      width: 100%; max-height: 92vh; overflow-y: auto;
       background: var(--bg-surface);
       border: 1px solid var(--line-soft);
       border-radius: 24px 24px 0 0;
@@ -72,7 +72,7 @@
     .sp-sheet h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
     .sp-sheet .field { margin-bottom: 12px; }
     .sp-sheet label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
-    .sp-sheet input, .sp-sheet textarea {
+    .sp-sheet input[type="text"], .sp-sheet textarea, .sp-sheet select {
       width: 100%;
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--line-soft);
@@ -83,9 +83,13 @@
       font-family: inherit;
       outline: none;
     }
+    .sp-sheet select option { color: #000; }
     .sp-sheet textarea { min-height: 70px; resize: vertical; }
+    .sp-sheet .check { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text-primary); margin: 10px 0; }
+    .sp-sheet .check small { display: block; color: var(--text-muted); font-size: 11.5px; margin-top: 2px; }
     .sp-sheet .row { display: flex; gap: 10px; margin-top: 16px; }
     .sp-sheet .row .btn { flex: 1; }
+    .sp-badge { font-size: 10.5px; color: var(--text-muted); margin-left: 6px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -149,6 +153,29 @@
         <label for="spaceDesc">Description</label>
         <textarea id="spaceDesc" placeholder="What's this space about?" maxlength="140"></textarea>
       </div>
+      <div class="field">
+        <label for="spacePrivacy">Privacy</label>
+        <select id="spacePrivacy">
+          <option value="public">Public — anyone can see posts</option>
+          <option value="private">Private — only members can see posts</option>
+        </select>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="spaceHidden" />
+        <span>Hidden<small>Not shown in Discover. Only people with the invite link can find it.</small></span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="spaceAuto" checked />
+        <span>Auto-approve members<small>People with a complete profile join instantly. Turn off to approve every request manually.</small></span>
+      </label>
+      <div class="field">
+        <label for="spaceQuestion">Joining question (optional)</label>
+        <input type="text" id="spaceQuestion" placeholder="e.g. Why do you want to join?" maxlength="100" />
+      </div>
+      <div class="field">
+        <label for="spaceRules">Group rules (one per line)</label>
+        <textarea id="spaceRules" placeholder="Be respectful&#10;No spam&#10;No hate speech" maxlength="800"></textarea>
+      </div>
       <div class="row">
         <button type="button" class="btn btn-outline" id="cancelCreate">Cancel</button>
         <button type="button" class="btn btn-primary" id="submitCreate">Create</button>
@@ -160,7 +187,7 @@
     import {
       db,
       doc, updateDoc, arrayUnion, arrayRemove,
-      collection, addDoc, query, orderBy, onSnapshot, serverTimestamp,
+      collection, addDoc, query, where, onSnapshot, serverTimestamp,
     } from './js/firebase-init.js';
     import { requireAuth, setActiveNav, showToast } from './js/app.js';
 
@@ -173,24 +200,42 @@
     }
 
     let currentUser = null;
+    let mineDocs = [];
+    let discoverDocs = [];
+
+    const byNewest = (a, b) => (b.data.createdAt?.seconds || 0) - (a.data.createdAt?.seconds || 0);
+
+    function genCode(len = 10) {
+      const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+      const arr = new Uint32Array(len);
+      crypto.getRandomValues(arr);
+      return Array.from(arr, (n) => chars[n % chars.length]).join('');
+    }
+
+    function profileOk(u) {
+      const verified = u.emailVerified || (u.providerData || []).some((p) => p.providerId !== 'password');
+      return !!u.displayName && !!u.email && verified;
+    }
 
     function renderCard(id, space) {
       const members = Array.isArray(space.members) ? space.members : [];
       const joined = members.includes(currentUser.uid);
+      const isPublic = space.privacy !== 'private';
+      const lock = isPublic ? '' : '🔒 ';
+      const canInstantJoin = isPublic && space.autoApprove !== false && profileOk(currentUser);
       const card = document.createElement('div');
       card.className = 'card sp-card';
       card.innerHTML = `
-        <div class="sp-icon">${space.icon || '🪐'}</div>
+        <div class="sp-icon">${escapeHtml(space.icon || '🪐')}</div>
         <div class="sp-meta">
-          <div class="sp-name">${escapeHtml(space.name || 'Untitled Space')}</div>
+          <div class="sp-name">${lock}${escapeHtml(space.name || 'Untitled Space')}${space.hidden ? '<span class="sp-badge">Hidden</span>' : ''}</div>
           <div class="sp-desc">${escapeHtml(space.description || '')}</div>
           <div class="sp-count">${members.length} member${members.length === 1 ? '' : 's'}</div>
         </div>
-        <button class="sp-join-btn ${joined ? 'joined' : 'join'}" data-id="${id}" data-joined="${joined}">
-          ${joined ? 'Joined' : 'Join'}
+        <button class="sp-join-btn ${joined ? 'joined' : 'join'}" data-id="${id}" data-joined="${joined}" data-instant="${canInstantJoin}">
+          ${joined ? 'Joined' : (canInstantJoin ? 'Join' : 'View')}
         </button>
       `;
-      // কার্ডে ক্লিক করলে Space-এর ভেতরে যাবে (Join বাটন বাদে)
       card.addEventListener('click', (e) => {
         if (e.target.closest('.sp-join-btn')) return;
         location.href = 'space.html?id=' + id;
@@ -198,37 +243,41 @@
       return card;
     }
 
+    function paint() {
+      document.getElementById('loadingHint').style.display = 'none';
+      const mineGrid = document.getElementById('mineGrid');
+      const discoverGrid = document.getElementById('discoverGrid');
+      mineGrid.innerHTML = '';
+      discoverGrid.innerHTML = '';
+
+      const mineIds = new Set(mineDocs.map((d) => d.id));
+      const mine = [...mineDocs].sort(byNewest);
+      const discover = discoverDocs.filter((d) => !mineIds.has(d.id)).sort(byNewest);
+
+      mine.forEach((d) => mineGrid.appendChild(renderCard(d.id, d.data)));
+      discover.forEach((d) => discoverGrid.appendChild(renderCard(d.id, d.data)));
+
+      document.getElementById('mineEmpty').style.display = mine.length === 0 ? 'block' : 'none';
+      document.getElementById('discoverEmpty').style.display = discover.length === 0 ? 'block' : 'none';
+    }
+
     function subscribeSpaces() {
-      const q = query(collection(db, 'spaces'), orderBy('createdAt', 'desc'));
-      onSnapshot(q, (snap) => {
-        document.getElementById('loadingHint').style.display = 'none';
-
-        const mineGrid = document.getElementById('mineGrid');
-        const discoverGrid = document.getElementById('discoverGrid');
-        mineGrid.innerHTML = '';
-        discoverGrid.innerHTML = '';
-
-        let mineCount = 0;
-        let discoverCount = 0;
-
-        snap.forEach((d) => {
-          const space = d.data();
-          const members = Array.isArray(space.members) ? space.members : [];
-          if (members.includes(currentUser.uid)) {
-            mineGrid.appendChild(renderCard(d.id, space));
-            mineCount += 1;
-          } else {
-            discoverGrid.appendChild(renderCard(d.id, space));
-            discoverCount += 1;
-          }
-        });
-
-        document.getElementById('mineEmpty').style.display = mineCount === 0 ? 'block' : 'none';
-        document.getElementById('discoverEmpty').style.display = discoverCount === 0 ? 'block' : 'none';
-      }, (err) => {
+      const onErr = (err) => {
         console.error(err);
         document.getElementById('loadingHint').textContent = 'Could not load spaces right now.';
-      });
+      };
+      // আমার Spaces (hidden সহ)
+      onSnapshot(
+        query(collection(db, 'spaces'), where('members', 'array-contains', currentUser.uid)),
+        (snap) => { mineDocs = snap.docs.map((d) => ({ id: d.id, data: d.data() })); paint(); },
+        onErr
+      );
+      // Discover — hidden Space কখনো আসবে না
+      onSnapshot(
+        query(collection(db, 'spaces'), where('hidden', '==', false)),
+        (snap) => { discoverDocs = snap.docs.map((d) => ({ id: d.id, data: d.data() })); paint(); },
+        onErr
+      );
     }
 
     document.body.addEventListener('click', async (e) => {
@@ -236,11 +285,25 @@
       if (!btn) return;
       const id = btn.dataset.id;
       const isJoined = btn.dataset.joined === 'true';
+      const instant = btn.dataset.instant === 'true';
+
+      // Private / approval লাগলে Space পেজে গিয়ে request পাঠাতে হবে
+      if (!isJoined && !instant) { location.href = 'space.html?id=' + id; return; }
+
       btn.disabled = true;
       try {
-        await updateDoc(doc(db, 'spaces', id), {
-          members: isJoined ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid),
-        });
+        const name = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Member');
+        if (isJoined) {
+          await updateDoc(doc(db, 'spaces', id), {
+            members: arrayRemove(currentUser.uid),
+            admins: arrayRemove(currentUser.uid),
+          });
+        } else {
+          await updateDoc(doc(db, 'spaces', id), {
+            members: arrayUnion(currentUser.uid),
+            ['memberNames.' + currentUser.uid]: name,
+          });
+        }
       } catch (err) {
         console.error(err);
         showToast('Could not update membership.');
@@ -259,12 +322,19 @@
       const icon = document.getElementById('spaceIcon').value.trim() || '🪐';
       const name = document.getElementById('spaceName').value.trim();
       const description = document.getElementById('spaceDesc').value.trim();
+      const privacy = document.getElementById('spacePrivacy').value;
+      const hidden = document.getElementById('spaceHidden').checked;
+      const autoApprove = document.getElementById('spaceAuto').checked;
+      const question = document.getElementById('spaceQuestion').value.trim();
+      const rules = document.getElementById('spaceRules').value
+        .split('\n').map((r) => r.trim()).filter(Boolean).slice(0, 15);
 
       if (name.length < 2) {
         showToast('Please give your space a name.');
         return;
       }
 
+      const myName = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Member');
       const submitBtn = document.getElementById('submitCreate');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Creating…';
@@ -272,13 +342,19 @@
       try {
         await addDoc(collection(db, 'spaces'), {
           icon, name, description,
+          privacy, hidden, autoApprove, question, rules,
+          inviteCode: genCode(),
+          liveActive: false,
           members: [currentUser.uid],
+          admins: [currentUser.uid],
+          memberNames: { [currentUser.uid]: myName },
           createdBy: currentUser.uid,
           createdAt: serverTimestamp(),
         });
-        document.getElementById('spaceIcon').value = '';
-        document.getElementById('spaceName').value = '';
-        document.getElementById('spaceDesc').value = '';
+        ['spaceIcon', 'spaceName', 'spaceDesc', 'spaceQuestion', 'spaceRules'].forEach((i) => { document.getElementById(i).value = ''; });
+        document.getElementById('spaceHidden').checked = false;
+        document.getElementById('spaceAuto').checked = true;
+        document.getElementById('spacePrivacy').value = 'public';
         backdrop.classList.remove('show');
         showToast('Space created ✦');
       } catch (err) {
