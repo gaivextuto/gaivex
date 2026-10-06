@@ -3,9 +3,10 @@
    এই ফাইলটাও একবারই লেখা — নতুন পেজে শুধু এভাবে ইমপোর্ট করবেন:
 
    <script type="module">
-     import { auth, db, storage } from './js/firebase-init.js';
+     import { auth, db } from './js/firebase-init.js';
    </script>
 
+   ছবি ও PDF Cloudinary-তে রাখা হয় (দেখুন space.html-এর CLOUDINARY কনফিগ)।
    কখনো এই ফাইলে হাত দেওয়া লাগবে না, যতক্ষণ না আপনি Firebase প্রজেক্ট বদলান।
    ===================================================================== */
 
@@ -27,8 +28,10 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
   updateDoc,
   deleteDoc,
+  deleteField,
   collection,
   addDoc,
   query,
@@ -64,7 +67,7 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
+export const storage = getStorage(app); // পুরনো পেজের জন্য রাখা হয়েছে
 export const googleProvider = new GoogleAuthProvider();
 
 export {
@@ -79,8 +82,10 @@ export {
   doc,
   setDoc,
   getDoc,
+  getDocs,
   updateDoc,
   deleteDoc,
+  deleteField,
   collection,
   addDoc,
   query,
