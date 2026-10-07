@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Creator Center</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .cr-top { justify-content: flex-start; gap: 12px; }
+    .cr-top a { font-size: 18px; color: var(--text-secondary); }
+    .cr-top span { font-size: 16px; font-weight: 700; }
+    .cr-body { padding: 16px; max-width: 560px; margin: 0 auto; }
+    .cr-title { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em; margin: 22px 0 10px; }
+    .cr-title:first-child { margin-top: 4px; }
+    .cr-range { display: flex; gap: 6px; margin-bottom: 14px; }
+    .cr-range button, .cr-tabs button { padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; background: rgba(255,255,255,.06); color: var(--text-secondary); }
+    .cr-range button.on, .cr-tabs button.on { background: var(--grad-brand); color: #fff; }
+    .cr-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .cr-stat { padding: 14px; }
+    .cr-stat b { display: block; font: 800 22px 'Bricolage Grotesque', sans-serif; }
+    .cr-stat span { font-size: 11.5px; color: var(--text-muted); }
+    .cr-card { padding: 14px; }
+    .cr-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-top: 10px; }
+    .cr-bar { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 4px; font-size: 9.5px; color: var(--text-muted); }
+    .cr-bar i { width: 100%; border-radius: 6px 6px 2px 2px; background: var(--grad-cool); min-height: 3px; }
+    .cr-prog { margin-bottom: 14px; }
+    .cr-prog:last-child { margin-bottom: 0; }
+    .cr-prog .l { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px; }
+    .cr-track { height: 6px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .cr-track i { display: block; height: 100%; background: var(--grad-brand); border-radius: 99px; }
+    .cr-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+    .cr-item { display: flex; gap: 12px; align-items: center; padding: 10px; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
+    .cr-item:last-child { border-bottom: none; }
+    .cr-thumb { width: 56px; height: 56px; border-radius: 10px; overflow: hidden; background: var(--bg-raised); flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; text-align: center; padding: 4px; color: var(--text-secondary); position: relative; }
+    .cr-thumb img, .cr-thumb video { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; pointer-events: none; }
+    .cr-info { flex: 1; min-width: 0; }
+    .cr-cap { font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cr-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+    .cr-del { font-size: 16px; padding: 6px; }
+    .cr-empty { text-align: center; color: var(--text-muted); font-size: 12.5px; padding: 22px 8px; }
+    .cr-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .cr-actions a { padding: 14px; text-align: center; font-size: 13px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="bg-cosmic"></div>
+  <header class="top-bar cr-top"><a href="profile.html" aria-label="Back">←</a><span>Creator Center</span></header>
+
+  <main class="page"><div class="cr-body">
+    <div class="cr-title">Overview</div>
+    <div class="cr-range" id="range">
+      <button data-d="7">7 days</button><button data-d="30">30 days</button><button data-d="0" class="on">All time</button>
+    </div>
+    <div class="cr-stats" id="stats"></div>
+
+    <div class="cr-title">Views · latest videos</div>
+    <div class="card cr-card"><div id="chart" class="cr-chart"></div></div>
+
+    <div class="cr-title">Best performing</div>
+    <div class="card cr-card" id="best"><div class="cr-empty">Loading…</div></div>
+
+    <div class="cr-title">Milestones</div>
+    <div class="card cr-card" id="goals"></div>
+
+    <div class="cr-title">Create</div>
+    <div class="cr-actions">
+      <a class="card" href="create-pulse.html?type=video">🎬 New Pulse Video</a>
+      <a class="card" href="create-pulse.html?type=post">✍️ New Post</a>
+      <a class="card" href="live.html">🔴 Go Live</a>
+      <a class="card" href="events.html">📅 Events</a>
+    </div>
+
+    <div class="cr-title">Content manager</div>
+    <div class="cr-tabs" id="tabs"><button data-t="videos" class="on">Videos</button><button data-t="posts">Posts</button></div>
+    <div class="card" id="list"><div class="cr-empty">Loading…</div></div>
+    <div style="height:calc(30px + var(--safe-bottom))"></div>
+  </div></main>
+
+  <script type="module">
+    import { db, doc, getDoc, deleteDoc, collection, query, where, orderBy, onSnapshot } from './js/firebase-init.js';
+    import { requireAuth, showToast } from './js/app.js';
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
+    const fmt = (n) => { n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1).replace('.0', '') + 'K' : String(n); };
+    const likesOf = (x) => (Array.isArray(x.likes) ? x.likes.length : 0);
+    const ms = (x) => (x.createdAt && x.createdAt.toMillis ? x.createdAt.toMillis() : 0);
+    const ago = (t) => { if (!t) return ''; const m = (Date.now() - t) / 60000; return m < 60 ? `${Math.max(1, m | 0)}m ago` : m < 1440 ? `${(m / 60) | 0}h ago` : `${(m / 1440) | 0}d ago`; };
+
+    let user = null, videos = [], posts = [], followers = 0, days = 0, tab = 'videos';
+
+    const inRange = (x) => !days || ms(x) >= Date.now() - days * 864e5;
+
+    function render() {
+      const v = videos.filter(inRange), p = posts.filter(inRange);
+      const views = v.reduce((a, x) => a + (x.views || 0), 0);
+      const likes = [...v, ...p].reduce((a, x) => a + likesOf(x), 0);
+      const comments = [...v, ...p].reduce((a, x) => a + (x.commentsCount || 0), 0);
+      const eng = views ? (((likes + comments) / views) * 100).toFixed(1) + '%' : '—';
+      const cards = [['Views', fmt(views)], ['Likes', fmt(likes)], ['Comments', fmt(comments)], ['Engagement', eng], ['Videos', v.length], ['Posts', p.length]];
+      $('stats').innerHTML = cards.map(([l, n]) => `<div class="card cr-stat"><b>${n}</b><span>${l}</span></div>`).join('');
+
+      // chart: latest 8 videos (oldest → newest)
+      const last = v.slice(0, 8).reverse(), max = Math.max(1, ...last.map((x) => x.views || 0));
+      $('chart').innerHTML = last.length ? last.map((x) => `<div class="cr-bar"><span>${fmt(x.views)}</span><i style="height:${Math.max(3, ((x.views || 0) / max) * 80)}px"></i></div>`).join('')
+        : '<div class="cr-empty" style="width:100%">Post a video to see performance.</div>';
+
+      // best
+      const all = [...v.map((x) => ({ ...x, kind: 'video' })), ...p.map((x) => ({ ...x, kind: 'post' }))];
+      const top = all.sort((a, b) => ((b.views || 0) + likesOf(b) * 5 + (b.commentsCount || 0) * 8) - ((a.views || 0) + likesOf(a) * 5 + (a.commentsCount || 0) * 8))[0];
+      $('best').innerHTML = top ? `<div class="cr-cap">${top.kind === 'video' ? '🎬' : '✍️'} ${esc(top.caption || top.text || 'Untitled')}</div>
+        <div class="cr-meta">${top.kind === 'video' ? fmt(top.views) + ' views · ' : ''}${fmt(likesOf(top))} likes · ${fmt(top.commentsCount)} comments</div>`
+        : '<div class="cr-empty">Nothing here yet.</div>';
+
+      // milestones (progress goals)
+      const totalViews = videos.reduce((a, x) => a + (x.views || 0), 0);
+      const goal = (l, n, g) => `<div class="cr-prog"><div class="l"><span>${l}</span><b>${fmt(n)} / ${fmt(g)}</b></div><div class="cr-track"><i style="width:${Math.min(100, (n / g) * 100)}%"></i></div></div>`;
+      $('goals').innerHTML = goal('Followers', followers, 100) + goal('Total video views', totalViews, 1000) + goal('Pulses shared', videos.length + posts.length, 10);
+
+      renderList();
+    }
+
+    function renderList() {
+      const rows = tab === 'videos' ? videos : posts;
+      if (!rows.length) { $('list').innerHTML = `<div class="cr-empty">No ${tab} yet.</div>`; return; }
+      $('list').innerHTML = rows.map((x) => {
+        const thumb = tab === 'videos' ? `<video src="${x.videoURL}#t=0.1" preload="metadata" muted playsinline></video>`
+          : x.mediaURL ? `<img src="${x.mediaURL}" alt="" loading="lazy" />` : '📝';
+        const meta = `${tab === 'videos' ? fmt(x.views) + ' views · ' : ''}${fmt(likesOf(x))} ♥ · ${fmt(x.commentsCount)} 💬 · ${ago(ms(x))}`;
+        return `<div class="cr-item" data-open="${x.id}"><div class="cr-thumb">${thumb}</div>
+          <div class="cr-info"><div class="cr-cap">${esc(x.caption || x.text || 'No caption')}</div><div class="cr-meta">${meta}</div></div>
+          <button class="cr-del" data-del="${x.id}" aria-label="Delete">🗑</button></div>`;
+      }).join('');
+      $('list').querySelectorAll('[data-open]').forEach((el) => el.addEventListener('click', (e) => {
+        if (e.target.closest('[data-del]')) return;
+        location.href = tab === 'videos' ? `pulse.html?id=${el.dataset.open}` : `post-detail.html?id=${el.dataset.open}`;
+      }));
+      $('list').querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('Delete this? This cannot be undone.')) return;
+        try { await deleteDoc(doc(db, tab === 'videos' ? 'reels' : 'posts', b.dataset.del)); showToast('Deleted'); }
+        catch (err) { console.error(err); showToast('Could not delete.'); }
+      }));
+    }
+
+    $('range').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      days = Number(b.dataset.d);
+      document.querySelectorAll('#range button').forEach((x) => x.classList.toggle('on', x === b));
+      render();
+    });
+    $('tabs').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      tab = b.dataset.t;
+      document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b));
+      renderList();
+    });
+
+    function watch(col, set) {
+      const q = query(collection(db, col), where('uid', '==', user.uid), orderBy('createdAt', 'desc'));
+      onSnapshot(q, (s) => { set(s.docs.map((d) => ({ id: d.id, ...d.data() }))); render(); }, (err) => {
+        console.error(err);
+        $('list').innerHTML = `<div class="cr-empty">${err.code === 'failed-precondition' ? 'Needs a Firestore index — open the browser console and click the "Create Index" link.' : 'Could not load data.'}</div>`;
+      });
+    }
+
+    (async () => {
+      user = await requireAuth(); if (!user) return;
+      try { const s = await getDoc(doc(db, 'users', user.uid)); const f = s.exists() ? s.data().followers : []; followers = Array.isArray(f) ? f.length : 0; } catch (e) {}
+      watch('reels', (r) => { videos = r; });
+      watch('posts', (r) => { posts = r; });
+    })();
+  </script>
+</body>
+</html>
