@@ -85,13 +85,9 @@
 
       <div class="nt-section-title">Activity</div>
       <div class="nt-list" id="activityList">
-        <div class="card activity-item">
-          <div class="activity-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-          </div>
-          <p class="activity-text">Likes and comments on your pulses will show up here.</p>
-        </div>
+        <!-- এখানে ফায়ারবেস থেকে লাইক, কমেন্ট ও শেয়ারের নোটিফিকেশন শো করবে -->
       </div>
+      <p class="nt-empty" id="activityEmpty" style="display:none;">No recent activity.</p>
     </div>
   </main>
 
@@ -121,11 +117,11 @@
     import {
       db,
       doc, getDoc, updateDoc, arrayUnion, arrayRemove,
-      onSnapshot,
+      collection, query, where, orderBy, onSnapshot,
     } from './js/firebase-init.js';
     import { requireAuth, setActiveNav, showToast } from './js/app.js';
 
-    setActiveNav('home'); // notifications lives off the home tab's bell icon
+    setActiveNav('home');
 
     function initialsOf(name) {
       return (name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -141,14 +137,12 @@
       return div.innerHTML;
     }
 
-    // ব্রাউজার/মোবাইল নোটিফিকেশন পারমিশন নেওয়ার ফাংশন
     async function requestNotificationPermission() {
       if ('Notification' in window && Notification.permission === 'default') {
         await Notification.requestPermission();
       }
     }
 
-    // ডিভাইস নোটিফিকেশন পপ-আপ পাঠানোর ফাংশন
     function sendDeviceNotification(title, body) {
       if ('Notification' in window && Notification.permission === 'granted') {
         if (navigator.serviceWorker && navigator.serviceWorker.controller) {
@@ -171,18 +165,18 @@
       const currentUser = await requireAuth();
       if (!currentUser) return;
 
-      // পেজ লোড হওয়ামাত্র নোটিফিকেশন পারমিশন চাওয়া
       requestNotificationPermission();
 
       const myRef = doc(db, 'users', currentUser.uid);
       let previousRequestCount = null;
+      let previousActivityCount = null;
 
+      // ১. ফ্রেন্ড রিকোয়েস্টের রিয়েল-টাইম লিসেনার
       onSnapshot(myRef, async (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
         const requestUids = Array.isArray(data.friendRequests) ? data.friendRequests : [];
 
-        // নতুন ফ্রেন্ড রিকোয়েস্ট আসলে নেটিভ ডিভাইস নোটিফিকেশন ট্রিগার করবে
         if (previousRequestCount !== null && requestUids.length > previousRequestCount) {
           sendDeviceNotification('New Friend Request ✦', 'Someone sent you a friend request on GAIVEX.');
         }
@@ -198,7 +192,6 @@
         }
         emptyEl.style.display = 'none';
 
-        // Fetch each requester's profile to show name/avatar.
         const profiles = await Promise.all(requestUids.map(async (uid) => {
           try {
             const s = await getDoc(doc(db, 'users', uid));
@@ -224,6 +217,56 @@
             </div>
           `;
           listEl.appendChild(item);
+        });
+      });
+
+      // ২. লাইক, কমেন্ট ও শেয়ারের অ্যাক্টিভিটি নোটিফিকেশন লিসেনার
+      // ধরে নেওয়া হচ্ছে ফায়ারবেসে `notifications` নামে একটি কালেকশন আছে যেখানে প্রতিটি নোটিফিকেশনের `toUserId` ফিল্ডে ইউজারের ইউআইডি সেভ করা থাকে।
+      const activityQuery = query(
+        collection(db, 'notifications'),
+        where('toUserId', '==', currentUser.uid)
+      );
+
+      onSnapshot(activityQuery, (snapshot) => {
+        const activityListEl = document.getElementById('activityList');
+        const activityEmptyEl = document.getElementById('activityEmpty');
+
+        if (snapshot.empty) {
+          activityListEl.innerHTML = '';
+          activityEmptyEl.style.display = 'block';
+          return;
+        }
+        activityEmptyEl.style.display = 'none';
+
+        const activities = [];
+        snapshot.forEach((docSnap) => {
+          activities.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        // নতুন অ্যাক্টিভিটি আসলে ডিভাইস নোটিফিকেশন পাঠানোর জন্য চেক করা
+        if (previousActivityCount !== null && activities.length > previousActivityCount) {
+          sendDeviceNotification('New Activity ✦', 'Someone interacted with your pulse on GAIVEX.');
+        }
+        previousActivityCount = activities.length;
+
+        activityListEl.innerHTML = '';
+        activities.forEach((act) => {
+          let actionText = 'interacted with your pulse';
+          if (act.type === 'like') actionText = 'liked your pulse.';
+          else if (act.type === 'comment') actionText = 'commented on your pulse.';
+          else if (act.type === 'share') actionText = 'shared your pulse.';
+
+          const item = document.createElement('div');
+          item.className = 'card activity-item';
+          item.innerHTML = `
+            <div class="activity-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+            </div>
+            <div class="nt-info">
+              <p class="activity-text"><b>${escapeHtml(act.fromUsername || 'Someone')}</b> ${actionText}</p>
+            </div>
+          `;
+          activityListEl.appendChild(item);
         });
       });
 
