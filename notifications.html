@@ -141,16 +141,52 @@
       return div.innerHTML;
     }
 
+    // ব্রাউজার/মোবাইল নোটিফিকেশন পারমিশন নেওয়ার ফাংশন
+    async function requestNotificationPermission() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    }
+
+    // ডিভাইস নোটিফিকেশন পপ-আপ পাঠানোর ফাংশন
+    function sendDeviceNotification(title, body) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.showNotification(title, {
+              body: body,
+              icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>'
+            });
+          });
+        } else {
+          new Notification(title, {
+            body: body,
+            icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>'
+          });
+        }
+      }
+    }
+
     (async () => {
       const currentUser = await requireAuth();
       if (!currentUser) return;
 
+      // পেজ লোড হওয়ামাত্র নোটিফিকেশন পারমিশন চাওয়া
+      requestNotificationPermission();
+
       const myRef = doc(db, 'users', currentUser.uid);
+      let previousRequestCount = null;
 
       onSnapshot(myRef, async (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
         const requestUids = Array.isArray(data.friendRequests) ? data.friendRequests : [];
+
+        // নতুন ফ্রেন্ড রিকোয়েস্ট আসলে নেটিভ ডিভাইস নোটিফিকেশন ট্রিগার করবে
+        if (previousRequestCount !== null && requestUids.length > previousRequestCount) {
+          sendDeviceNotification('New Friend Request ✦', 'Someone sent you a friend request on GAIVEX.');
+        }
+        previousRequestCount = requestUids.length;
 
         const listEl = document.getElementById('requestList');
         const emptyEl = document.getElementById('requestEmpty');
