@@ -195,6 +195,7 @@
       collection, addDoc, serverTimestamp,
     } from './js/firebase-init.js';
     import { requireAuth, showToast, uploadToCloudinary } from './js/app.js';
+    import { notifyNewPost } from './js/push.js';
 
     let currentUser = null;
     let selectedFile = null;
@@ -382,7 +383,7 @@
           // Short video → "reels" collection → shows up in the Pulse tab (and Home feed).
           const videoURL = await uploadToCloudinary(selectedFile, 'gaivex/reels', 90000);
 
-          await addDoc(collection(db, 'reels'), {
+          const ref = await addDoc(collection(db, 'reels'), {
             ...author,
             videoURL,
             caption: els.text.value.trim(),
@@ -390,6 +391,10 @@
             commentsCount: 0,
             createdAt: serverTimestamp(),
           });
+
+          // 🔔 tell friends & followers about the new video
+          els.postBtn.textContent = 'Notifying…';
+          try { await notifyNewPost(ref.id, 'reels'); } catch (e) { console.warn(e); }
 
           showToast('Added to Pulse ✦');
           window.location.href = 'pulse.html';
@@ -400,7 +405,7 @@
             mediaURL = await uploadToCloudinary(selectedFile, 'gaivex/pulses', 45000);
           }
 
-          await addDoc(collection(db, 'posts'), {
+          const ref = await addDoc(collection(db, 'posts'), {
             ...author,
             text: els.text.value.trim(),
             mediaURL,
@@ -408,6 +413,10 @@
             commentsCount: 0,
             createdAt: serverTimestamp(),
           });
+
+          // 🔔 tell friends & followers about the new post
+          els.postBtn.textContent = 'Notifying…';
+          try { await notifyNewPost(ref.id, 'posts'); } catch (e) { console.warn(e); }
 
           showToast('Pulse posted ✦');
           window.location.href = 'home.html';
