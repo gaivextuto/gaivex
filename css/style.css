@@ -1553,7 +1553,7 @@ select {
 
 
 /* =====================================================================
-   22 — PAGE
+   22 — PAGE (FIXED OVERLAP GAP)
    ===================================================================== */
 
 .page {
@@ -1568,13 +1568,14 @@ select {
 
   margin-inline: auto;
 
+  /* নেভবারের নিচে কন্টেন্ট বা ফর্ম যেন কেটে না যায়, তাই প্যাডিং বাড়িয়ে পর্যাপ্ত গ্যাপ করা হলো */
   padding:
     18px
     18px
     calc(
       var(--nav-height)
       + var(--safe-bottom)
-      + 34px
+      + 70px
     );
 }
 
@@ -2332,8 +2333,8 @@ select:focus {
       calc(
         var(--nav-height)
         + var(--safe-bottom)
-        + 30px
-      );
+        + 85px
+      ) !important;
   }
 
   .card {
