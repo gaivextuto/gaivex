@@ -1,4 +1,6 @@
 // GAIVEX calls: 1-to-1 audio/video via WebRTC, signaling through Firestore
+import { notify } from './push.js';
+
 export function initCalls({ db, doc, setDoc, getDoc, collection, addDoc, onSnapshot, serverTimestamp, me, myName, showToast }) {
   const ICE = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }] };
   let peer = null;            // { uid, name } currently open chat
@@ -102,6 +104,8 @@ export function initCalls({ db, doc, setDoc, getDoc, collection, addDoc, onSnaps
       await setDoc(doc(db, 'calls_inbox', peer.uid), {
         callId, from: me.uid, fromName: myName, type, status: 'ringing', ts: Date.now(),
       });
+      // 🔔 push notification so the friend's phone rings even if the app is closed
+      notify({ type: 'call', toUid: peer.uid, callType: type });
     } catch (e) { console.error(e); showToast('Could not start call — check Firestore rules'); return cleanup(); }
     setState('Ringing…');
     unsubs.push(onSnapshot(doc(db, 'calls', callId), async (s) => {
@@ -156,10 +160,13 @@ export function initCalls({ db, doc, setDoc, getDoc, collection, addDoc, onSnaps
   }
   async function endCall() {
     const id = callId, other = otherUid, wasRinging = incoming && !pc;
+    const unanswered = !incoming && pc && !pc.currentRemoteDescription; // caller hung up before the friend answered
     if (!id) return cleanup();
     if (wasRinging) return declineCall();
     try { await setDoc(doc(db, 'calls', id), { status: 'ended' }, { merge: true }); } catch {}
     try { await setDoc(doc(db, 'calls_inbox', other), { status: 'ended', callId: id }, { merge: true }); } catch {}
+    // 🔔 stop the ringing notification and show "Missed call" on the friend's phone
+    if (unanswered && other) notify({ type: 'callend', toUid: other, missed: true });
     cleanup();
   }
 
