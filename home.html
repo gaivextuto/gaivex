@@ -130,6 +130,7 @@ import {
 } from './js/firebase-init.js';
 import { requireAuth, setActiveNav, showToast } from './js/app.js';
 import { initStories } from './js/stories.js';
+import { initPush, notify } from './js/push.js';
 
 setActiveNav('home');
 // UI-level only. Real protection = Firestore Security Rules.
@@ -307,6 +308,8 @@ async function toggleLike(id, post, article) {
   cnt.textContent = Math.max(0, +cnt.textContent + (was ? -1 : 1));
   try {
     await updateDoc(doc(db, colOf(post), id), { likes: was ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid) });
+    // 🔔 notify the author (only when liking, not un-liking)
+    if (!was) notify({ type: 'like', postId: id, col: colOf(post) });
   } catch (err) {
     btn.classList.toggle('liked', was); cnt.textContent = Math.max(0, +cnt.textContent + (was ? 1 : -1));
     console.warn('Like failed:', err);
@@ -500,6 +503,7 @@ function setBadge(el, n) { el.textContent = n > 99 ? '99+' : n; el.style.display
 
   subscribeToFeed();
   initStories(user);   // stories row (js/stories.js)
+  initPush(user);      // 🔔 push notifications (asks permission with a button)
 })();
 </script>
 </body>
