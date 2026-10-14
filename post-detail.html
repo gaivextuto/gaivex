@@ -149,6 +149,7 @@
       collection, addDoc, query, orderBy, onSnapshot, serverTimestamp,
     } from './js/firebase-init.js';
     import { requireAuth, showToast } from './js/app.js';
+    import { initPush, notify } from './js/push.js';
 
     const postId = new URLSearchParams(window.location.search).get('id');
 
@@ -237,6 +238,8 @@
         await updateDoc(doc(db, 'posts', postId), {
           likes: nowLiked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid),
         });
+        // 🔔 notify the author (only when liking, not un-liking)
+        if (!nowLiked) notify({ type: 'like', postId, col: 'posts' });
       } catch (err) {
         console.warn('Could not update like:', err);
       }
@@ -279,7 +282,7 @@
       if (!text || !currentUser || !postId) return;
       input.value = '';
       try {
-        await addDoc(collection(db, 'posts', postId, 'comments'), {
+        const cref = await addDoc(collection(db, 'posts', postId, 'comments'), {
           uid: currentUser.uid,
           name: currentUser.displayName || currentUser.email.split('@')[0],
           photoURL: currentUser.photoURL || '',
@@ -287,6 +290,8 @@
           createdAt: serverTimestamp(),
         });
         await updateDoc(doc(db, 'posts', postId), { commentsCount: increment(1) });
+        // 🔔 notify the author of the post
+        notify({ type: 'comment', postId, col: 'posts', commentId: cref.id });
       } catch (err) {
         console.error(err);
         input.value = text;
@@ -304,6 +309,7 @@
     (async () => {
       currentUser = await requireAuth();
       if (!currentUser) return;
+      initPush(currentUser);
 
       if (!postId) {
         document.getElementById('loadingHint').textContent = 'Pulse not found.';
