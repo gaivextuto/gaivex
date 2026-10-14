@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Upload Video</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/video.css" />
+</head>
+<body>
+  <div class="bg-cosmic"></div>
+
+  <header class="top-bar">
+    <a href="videos.html" aria-label="Back" style="font-size:18px;color:var(--text-secondary)">←</a>
+    <span class="brand-logo" style="font-size:18px">Upload Video</span>
+    <span style="width:18px"></span>
+  </header>
+
+  <main class="page">
+    <div class="ul">
+      <label class="ul-drop" for="vf" id="drop">
+        <span style="font-size:34px">🎞️</span>
+        <b>Choose a video</b>
+        <span class="ul-note">Up to 100 MB</span>
+      </label>
+      <input type="file" id="vf" accept="video/*" hidden />
+      <p class="ul-note" id="info" style="margin-top:8px"></p>
+
+      <label class="f" for="title">Title</label>
+      <input class="input" id="title" maxlength="100" placeholder="Give your video a title" />
+
+      <label class="f" for="desc">Description</label>
+      <textarea id="desc" maxlength="2000" placeholder="What is this video about?"></textarea>
+
+      <label class="f" for="tf">Thumbnail (optional)</label>
+      <input type="file" id="tf" accept="image/*" class="input" style="padding-top:12px" />
+      <p class="ul-note" style="margin-top:6px">No thumbnail? We'll use a frame from your video.</p>
+
+      <div class="ul-prog" id="prog"><div></div></div>
+      <p class="ul-err" id="err"></p>
+      <button class="btn btn-primary btn-block btn-lg" id="go" style="margin-top:18px" disabled>Publish</button>
+    </div>
+  </main>
+
+  <script type="module">
+    import { db, collection, addDoc, serverTimestamp } from './js/firebase-init.js';
+    import { requireAuth, showToast } from './js/app.js';
+    import { CLOUD, MAX_BYTES } from './js/video-utils.js';
+
+    const $ = (i) => document.getElementById(i);
+    let user = null, vfile = null, duration = 0;
+
+    function fail(m) { $('err').textContent = m; $('err').style.display = 'block'; }
+    const mb = (b) => (b / 1048576).toFixed(1) + ' MB';
+
+    function cloudUpload(file, type, folder, onProg) {
+      return new Promise((resolve, reject) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('upload_preset', CLOUD.preset);
+        fd.append('folder', folder);
+        const x = new XMLHttpRequest();
+        x.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD.name}/${type}/upload`);
+        x.upload.onprogress = (e) => e.lengthComputable && onProg(e.loaded / e.total);
+        x.onload = () => {
+          let r = {}; try { r = JSON.parse(x.responseText); } catch (_) {}
+          x.status < 300 && r.secure_url ? resolve(r) : reject(new Error(r.error?.message || 'Upload failed'));
+        };
+        x.onerror = () => reject(new Error('Network error'));
+        x.send(fd);
+      });
+    }
+
+    $('vf').addEventListener('change', () => {
+      const f = $('vf').files[0];
+      $('err').style.display = 'none';
+      if (!f) return;
+      if (!f.type.startsWith('video/')) return fail('Please choose a video file.');
+      if (f.size > MAX_BYTES) return fail(`This video is ${mb(f.size)}. The limit is 100 MB for now.`);
+      vfile = f;
+      const v = document.createElement('video');
+      v.preload = 'metadata'; v.muted = true; v.controls = true; v.playsInline = true;
+      v.src = URL.createObjectURL(f);
+      v.onloadedmetadata = () => {
+        duration = v.duration || 0;
+        $('info').textContent = `${f.name} · ${mb(f.size)} · ${Math.floor(duration / 60)}m ${Math.floor(duration % 60)}s`;
+      };
+      $('drop').innerHTML = ''; $('drop').appendChild(v);
+      if (!$('title').value) $('title').value = f.name.replace(/\.[^.]+$/, '').slice(0, 100);
+      $('go').disabled = false;
+    });
+
+    $('go').addEventListener('click', async () => {
+      const title = $('title').value.trim();
+      if (!vfile) return fail('Choose a video first.');
+      if (!title) return fail('Please add a title.');
+      $('err').style.display = 'none';
+      $('go').disabled = true;
+      $('prog').style.display = 'block';
+      const fill = $('prog').firstElementChild;
+      const tf = $('tf').files[0];
+      try {
+        $('go').textContent = 'Uploading…';
+        const r = await cloudUpload(vfile, 'video', 'gaivex/videos', (p) => { fill.style.width = (p * (tf ? 90 : 100)) + '%'; });
+        let thumbURL = '';
+        if (tf) {
+          const t = await cloudUpload(tf, 'image', 'gaivex/video-thumbs', () => {});
+          thumbURL = t.secure_url; fill.style.width = '100%';
+        }
+        $('go').textContent = 'Publishing…';
+        const ref = await addDoc(collection(db, 'videos'), {
+          uid: user.uid,
+          authorName: user.displayName || user.email.split('@')[0],
+          authorPhoto: user.photoURL || '',
+          title, description: $('desc').value.trim(),
+          videoURL: r.secure_url, thumbURL,
+          duration: Math.round(r.duration || duration), size: vfile.size,
+          views: 0, likes: [], dislikes: [], commentsCount: 0,
+          createdAt: serverTimestamp(),
+        });
+        try { const m = await import('./js/push.js'); await m.notifyNewPost(ref.id, 'videos'); } catch (e) { console.warn(e); }
+        showToast('Video published ✦');
+        location.href = 'watch.html?id=' + ref.id;
+      } catch (e) {
+        console.error(e);
+        fail(e.message || 'Upload failed. Please try again.');
+        $('go').disabled = false; $('go').textContent = 'Publish';
+        $('prog').style.display = 'none'; fill.style.width = '0';
+      }
+    });
+
+    (async () => { user = await requireAuth(); })();
+  </script>
+</body>
+</html>
