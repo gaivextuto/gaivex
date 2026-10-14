@@ -1,39 +1,12 @@
 /* =====================================================================
    GAIVEX — GLOBAL APP LOGIC
-   প্রতিটা ভেতরের পেজে (home.html, spaces.html, community.html, ...)
-   এই ফাইলটা import করবেন:
+   প্রতিটা ভেতরের পেজে এই ফাইলটা import করবেন:
 
    <script type="module">
      import { requireAuth, logout, setActiveNav, showToast } from './js/app.js';
      requireAuth(); // লগইন না থাকলে auth.html এ পাঠিয়ে দেবে
      setActiveNav('home'); // বটম ন্যাভে সঠিক আইকন হাইলাইট করবে
    </script>
-
-   ============================ নতুন পেজ টেমপ্লেট ========================
-   নতুন কোনো পেজ (যেমন community.html) বানানোর সময় নিচের কাঠামো কপি করুন —
-   index.html বা এই ফাইলে কোনো পরিবর্তন লাগবে না:
-
-   <!DOCTYPE html>
-   <html lang="en">
-   <head>
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-     <title>GAIVEX — Community</title>
-     <link rel="stylesheet" href="css/style.css">
-   </head>
-   <body>
-     <div class="bg-cosmic"></div>
-     <header class="top-bar"> ... </header>
-     <main class="page"> ... </main>
-     <nav class="bottom-nav"> ... </nav>
-
-     <script type="module">
-       import { requireAuth, setActiveNav } from './js/app.js';
-       requireAuth();
-       setActiveNav('community');
-     </script>
-   </body>
-   </html>
    ===================================================================== */
 
 import { auth, onAuthStateChanged, signOut } from './firebase-init.js';
@@ -89,6 +62,11 @@ export function hasOnboarded() {
 }
 
 export async function logout() {
+  // 🔔 stop push notifications for this account on this device
+  try {
+    const m = await import('./push.js');
+    await m.removePushToken();
+  } catch (e) { /* ignore */ }
   await signOut(auth);
   window.location.replace(ONBOARDING_PAGE);
 }
@@ -133,15 +111,6 @@ export { ONBOARDING_KEY, AUTH_PAGE, HOME_PAGE, ONBOARDING_PAGE };
 
 /* =====================================================================
    MEDIA UPLOAD (Cloudinary)
-   Firebase Storage now requires a Blaze (billing) plan even for free
-   usage, so GAIVEX uploads images/videos to Cloudinary's free tier
-   instead (no card required). Firebase Auth + Firestore are untouched.
-
-   SETUP (one-time, ~5 minutes):
-   1. Create a free account at https://cloudinary.com
-   2. Copy your "Cloud Name" from the dashboard, paste it below.
-   3. Settings → Upload → Upload presets → Add upload preset →
-      Signing Mode = "Unsigned" → Save. Paste the preset name below.
    ===================================================================== */
 
 const CLOUDINARY_CLOUD_NAME = 'zcr4hgzf';
