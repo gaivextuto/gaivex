@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GAIVEX — Watch</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/video.css" />
+</head>
+<body>
+  <div class="bg-cosmic"></div>
+
+  <header class="top-bar">
+    <a href="videos.html" aria-label="Back" style="font-size:18px;color:var(--text-secondary)">←</a>
+    <span class="brand-logo" style="font-size:18px">Watch</span>
+    <span style="width:18px"></span>
+  </header>
+
+  <div class="wt">
+    <div class="wt-main">
+      <div class="pl paused" id="pl">
+        <video id="v" playsinline preload="metadata"></video>
+        <div class="pl-ui">
+          <span class="pl-skip l" id="skl">« 10s</span><span class="pl-skip r" id="skr">10s »</span>
+          <button class="pl-big" id="big" aria-label="Play">▶</button>
+          <div class="pl-bar">
+            <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek" />
+            <div class="pl-row">
+              <button id="pp" aria-label="Play/Pause">▶</button>
+              <span id="tm">0:00 / 0:00</span><span class="sp"></span>
+              <button id="spd">1x</button><button id="mu" aria-label="Mute">🔊</button><button id="fs" aria-label="Fullscreen">⛶</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="vd-empty" id="loading">Loading video…</p>
+      <div id="info" style="display:none">
+        <h1 class="wt-title" id="title"></h1>
+        <div class="wt-sub" id="sub"></div>
+        <div class="wt-author">
+          <div class="wt-av" id="av"></div>
+          <div style="flex:1;min-width:0"><b id="an" style="font-size:14px"></b></div>
+          <button class="btn btn-sm btn-ghost" id="del" style="display:none;color:#ff9eaa">Delete</button>
+        </div>
+        <div class="wt-actions">
+          <button class="wt-pill" id="like">♡ <span id="lc">0</span></button>
+          <button class="wt-pill" id="dis">👎 <span id="dc">0</span></button>
+          <button class="wt-pill" id="share">↗ Share</button>
+        </div>
+        <div class="wt-desc" id="desc"></div>
+        <div class="wt-h" id="cch">Comments</div>
+        <div id="clist"></div>
+      </div>
+    </div>
+    <aside class="wt-side"><div class="wt-h">Up next</div><div id="up"></div></aside>
+  </div>
+
+  <div class="wt-cbar">
+    <input class="input" id="ci" maxlength="500" placeholder="Add a comment…" />
+    <button class="btn btn-primary btn-sm" id="cs" style="height:42px">Send</button>
+  </div>
+
+  <script type="module">
+    import {
+      db, doc, getDocs, updateDoc, deleteDoc, arrayUnion, arrayRemove, increment,
+      collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
+    } from './js/firebase-init.js';
+    import { requireAuth, showToast } from './js/app.js';
+    import { esc, srcOf, thumbOf, fmtDur, fmtNum, ago, avatarHtml } from './js/video-utils.js';
+
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id) location.replace('videos.html');
+    const $ = (i) => document.getElementById(i);
+    const pl = $('pl'), v = $('v');
+    let me = null, vd = null, hideT = null, lastTap = 0;
+
+    /* ---------- Player ---------- */
+    const toggle = () => (v.paused ? v.play() : v.pause());
+    const showUi = () => { pl.classList.add('show'); clearTimeout(hideT); hideT = setTimeout(() => pl.classList.remove('show'), 2600); };
+    const skip = (s) => { v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + s)); const el = $(s < 0 ? 'skl' : 'skr'); el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); };
+
+    v.addEventListener('play', () => { pl.classList.remove('paused'); $('pp').textContent = '⏸'; showUi(); });
+    v.addEventListener('pause', () => { pl.classList.add('paused'); $('pp').textContent = '▶'; });
+    v.addEventListener('ended', () => { $('big').textContent = '↻'; });
+    v.addEventListener('playing', () => { $('big').textContent = '▶'; });
+    v.addEventListener('timeupdate', () => {
+      const d = v.duration || 0;
+      const s = $('seek'); s.value = d ? (v.currentTime / d) * 1000 : 0;
+      s.style.setProperty('--p', (s.value / 10) + '%');
+      $('tm').textContent = fmtDur(v.currentTime) + ' / ' + fmtDur(d);
+      // ভিউ গণনা: ৫ সেকেন্ড দেখলে (প্রতি সেশনে একবার)
+      if (v.currentTime >= 5 && !sessionStorage['vw_' + id]) {
+        sessionStorage['vw_' + id] = '1';
+        updateDoc(doc(db, 'videos', id), { views: increment(1) }).catch(() => {});
+      }
+    });
+    $('seek').addEventListener('input', (e) => { v.currentTime = (e.target.value / 1000) * (v.duration || 0); });
+    $('pp').addEventListener('click', toggle);
+    $('big').addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+    $('mu').addEventListener('click', () => { v.muted = !v.muted; $('mu').textContent = v.muted ? '🔇' : '🔊'; });
+    const speeds = [0.5, 1, 1.25, 1.5, 2];
+    $('spd').addEventListener('click', () => {
+      const n = speeds[(speeds.indexOf(v.playbackRate) + 1) % speeds.length];
+      v.playbackRate = n; $('spd').textContent = n + 'x';
+    });
+    $('fs').addEventListener('click', () => {
+      if (document.fullscreenElement || document.webkitFullscreenElement) return (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      const f = pl.requestFullscreen || pl.webkitRequestFullscreen;
+      if (f) f.call(pl); else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => {
+      try { document.fullscreenElement ? screen.orientation.lock('landscape') : screen.orientation.unlock(); } catch (_) {}
+    });
+    // ডাবল ট্যাপ = ১০ সেকেন্ড আগে/পরে, সিঙ্গেল ট্যাপ = কন্ট্রোল দেখাও
+    pl.addEventListener('click', (e) => {
+      if (e.target.closest('button,input')) return showUi();
+      const now = Date.now();
+      if (now - lastTap < 300) { const r = pl.getBoundingClientRect(); skip(e.clientX - r.left < r.width / 2 ? -10 : 10); }
+      else if (pl.classList.contains('show')) toggle();
+      lastTap = now; showUi();
+    });
+    pl.addEventListener('mousemove', showUi);
+    document.addEventListener('keydown', (e) => {
+      if (/INPUT|TEXTAREA/.test(document.activeElement.tagName) && document.activeElement.id !== 'seek') return;
+      if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+      else if (e.key === 'ArrowRight') skip(5);
+      else if (e.key === 'ArrowLeft') skip(-5);
+      else if (e.key === 'f') $('fs').click();
+      else if (e.key === 'm') $('mu').click();
+    });
+
+    /* ---------- Video data ---------- */
+    function render() {
+      $('loading').style.display = 'none'; $('info').style.display = 'block';
+      if (!v.getAttribute('src')) { v.src = srcOf(vd.videoURL); v.poster = thumbOf(vd); }
+      document.title = vd.title + ' — GAIVEX';
+      $('title').textContent = vd.title;
+      $('sub').textContent = `${fmtNum(vd.views)} views · ${ago(vd.createdAt)}`;
+      $('av').innerHTML = avatarHtml(vd.authorPhoto, vd.authorName);
+      $('an').textContent = vd.authorName || 'GAIVEX user';
+      const likes = vd.likes || [], dis = vd.dislikes || [];
+      $('like').classList.toggle('on', likes.includes(me.uid));
+      $('like').firstChild.textContent = likes.includes(me.uid) ? '♥ ' : '♡ ';
+      $('dis').classList.toggle('on', dis.includes(me.uid));
+      $('lc').textContent = fmtNum(likes.length); $('dc').textContent = fmtNum(dis.length);
+      $('desc').textContent = vd.description || 'No description.';
+      $('cch').textContent = `Comments · ${fmtNum(vd.commentsCount)}`;
+      $('del').style.display = vd.uid === me.uid ? 'inline-flex' : 'none';
+    }
+    $('desc').addEventListener('click', () => $('desc').classList.toggle('open'));
+
+    async function react(kind) {
+      const ref = doc(db, 'videos', id);
+      const mine = (vd[kind] || []).includes(me.uid);
+      const other = kind === 'likes' ? 'dislikes' : 'likes';
+      try {
+        await updateDoc(ref, { [kind]: mine ? arrayRemove(me.uid) : arrayUnion(me.uid), ...(mine ? {} : { [other]: arrayRemove(me.uid) }) });
+      } catch (e) { console.error(e); showToast('Could not update.'); }
+    }
+    $('like').addEventListener('click', () => react('likes'));
+    $('dis').addEventListener('click', () => react('dislikes'));
+    $('share').addEventListener('click', async () => {
+      const d = { title: vd.title, text: vd.title + ' — GAIVEX', url: location.href };
+      if (navigator.share) { try { await navigator.share(d); } catch (_) {} }
+      else { try { await navigator.clipboard.writeText(d.url); showToast('Link copied'); } catch (_) {} }
+    });
+    $('del').addEventListener('click', async () => {
+      if (!confirm('Delete this video? This cannot be undone.')) return;
+      try { await deleteDoc(doc(db, 'videos', id)); showToast('Video deleted'); location.replace('videos.html'); }
+      catch (e) { console.error(e); showToast('Could not delete.'); }
+    });
+
+    /* ---------- Comments ---------- */
+    function watchComments() {
+      onSnapshot(query(collection(db, 'videos', id, 'comments'), orderBy('createdAt', 'desc')), (s) => {
+        $('clist').innerHTML = s.empty ? '<p class="vd-empty" style="padding:20px 0">No comments yet.</p>' : s.docs.map((d) => {
+          const c = d.data();
+          const canDel = c.uid === me.uid || (vd && vd.uid === me.uid);
+          return `<div class="cm"><div class="wt-av" style="width:34px;height:34px;font-size:12px">${avatarHtml(c.photoURL, c.name)}</div>
+            <div class="cm-bubble"><b>${esc(c.name || 'GAIVEX user')}</b><small>${ago(c.createdAt)}</small><p>${esc(c.text)}</p>
+            ${canDel ? `<button class="cm-del" data-d="${d.id}">Delete</button>` : ''}</div></div>`;
+        }).join('');
+      });
+    }
+    $('clist').addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-d]'); if (!b) return;
+      try {
+        await deleteDoc(doc(db, 'videos', id, 'comments', b.dataset.d));
+        await updateDoc(doc(db, 'videos', id), { commentsCount: increment(-1) });
+      } catch (err) { console.error(err); showToast('Could not delete.'); }
+    });
+    async function sendComment() {
+      const text = $('ci').value.trim(); if (!text) return;
+      $('ci').value = '';
+      try {
+        await addDoc(collection(db, 'videos', id, 'comments'), {
+          uid: me.uid, name: me.displayName || me.email.split('@')[0], photoURL: me.photoURL || '', text, createdAt: serverTimestamp(),
+        });
+        await updateDoc(doc(db, 'videos', id), { commentsCount: increment(1) });
+      } catch (e) { console.error(e); $('ci').value = text; showToast('Could not post comment.'); }
+    }
+    $('cs').addEventListener('click', sendComment);
+    $('ci').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendComment(); });
+
+    /* ---------- Up next ---------- */
+    async function loadUpNext() {
+      try {
+        const s = await getDocs(query(collection(db, 'videos'), orderBy('createdAt', 'desc'), limit(12)));
+        $('up').innerHTML = s.docs.filter((d) => d.id !== id).map((d) => {
+          const x = d.data();
+          return `<a class="up" href="watch.html?id=${d.id}"><img src="${esc(thumbOf(x))}" alt="" loading="lazy" />
+            <div><b>${esc(x.title)}</b><span>${esc(x.authorName || '')}</span><span>${fmtNum(x.views)} views · ${fmtDur(x.duration)}</span></div></a>`;
+        }).join('') || '<p class="vd-empty" style="padding:10px 0">Nothing else yet.</p>';
+      } catch (e) { console.warn(e); }
+    }
+
+    (async () => {
+      me = await requireAuth(); if (!me) return;
+      onSnapshot(doc(db, 'videos', id), (s) => {
+        if (!s.exists()) { $('loading').textContent = 'This video was removed.'; $('info').style.display = 'none'; return; }
+        vd = s.data(); render();
+      });
+      watchComments(); loadUpNext();
+    })();
+  </script>
+</body>
+</html>
