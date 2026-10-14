@@ -121,6 +121,7 @@
     } from './js/firebase-init.js';
     import { requireAuth, setActiveNav, showToast } from './js/app.js';
     import { initCalls } from './js/calls.js';
+    import { initPush, notify } from './js/push.js';
 
     setActiveNav('home');
     const CLOUDINARY_CLOUD = "zcr4hgzf";
@@ -230,6 +231,10 @@
           imageUrl: imgToSend || null,
           createdAt: serverTimestamp(),
         });
+
+        // 🔔 push notification to the friend
+        notify({ type:'message', toUid: activeFriendUid, convId: activeConvId, text: imgToSend ? '📷 Photo' : sendingText });
+
         await setDoc(doc(db,'conversations',activeConvId,'typing',currentUser.uid),{isTyping:false},{merge:true});
       }catch(err){ console.error(err); input.value=sendingText; showToast('Could not send — check Firestore rules'); }
     }
@@ -327,6 +332,15 @@
         calls=initCalls({ db, doc, setDoc, getDoc, collection, addDoc, onSnapshot, serverTimestamp, me:currentUser, myName, showToast });
 
         await buildInbox();
+
+        // 🔔 push: enable notifications + open the chat when opened from a notification (?chat=uid)
+        initPush(currentUser);
+        const chatUid=new URLSearchParams(location.search).get('chat');
+        if(chatUid){
+          const row=inboxCache.find(r=>r.uid===chatUid);
+          if(row) openChat(row.uid,row.profile);
+        }
+
         await setPresence(true);
         window.addEventListener('beforeunload',()=>setPresence(false));
       }catch(err){ console.error('Init error',err); document.getElementById('loadingHint').textContent='Init failed: '+err.message; }
