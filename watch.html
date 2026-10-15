@@ -27,12 +27,13 @@
         <div class="pl-ui">
           <span class="pl-skip l" id="skl">« 10s</span><span class="pl-skip r" id="skr">10s »</span>
           <button class="pl-big" id="big" aria-label="Play">▶</button>
+          <div class="pl-menu" id="qm"></div>
           <div class="pl-bar">
             <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek" />
             <div class="pl-row">
               <button id="pp" aria-label="Play/Pause">▶</button>
               <span id="tm">0:00 / 0:00</span><span class="sp"></span>
-              <button id="spd">1x</button><button id="mu" aria-label="Mute">🔊</button><button id="fs" aria-label="Fullscreen">⛶</button>
+              <button id="qual">Auto</button><button id="spd">1x</button><button id="mu" aria-label="Mute">🔊</button><button id="fs" aria-label="Fullscreen">⛶</button>
             </div>
           </div>
         </div>
@@ -44,12 +45,14 @@
         <div class="wt-sub" id="sub"></div>
         <div class="wt-author">
           <div class="wt-av" id="av"></div>
-          <div style="flex:1;min-width:0"><b id="an" style="font-size:14px"></b></div>
+          <div style="flex:1;min-width:0"><b id="an" style="font-size:14px;display:block"></b><span class="wt-sub" id="oc"></span></div>
+          <button class="btn btn-sm btn-primary" id="orbit">🪐 Orbit</button>
           <button class="btn btn-sm btn-ghost" id="del" style="display:none;color:#ff9eaa">Delete</button>
         </div>
         <div class="wt-actions">
           <button class="wt-pill" id="like">♡ <span id="lc">0</span></button>
           <button class="wt-pill" id="dis">👎 <span id="dc">0</span></button>
+          <button class="wt-pill" id="save">＋ Save</button>
           <button class="wt-pill" id="share">↗ Share</button>
         </div>
         <div class="wt-desc" id="desc"></div>
@@ -57,17 +60,24 @@
         <div id="clist"></div>
       </div>
     </div>
-    <aside class="wt-side"><div class="wt-h">Up next</div><div id="up"></div></aside>
+    <aside class="wt-side"><div class="wt-h" id="uph">Up next</div><div id="up"></div></aside>
   </div>
 
+  <div class="sheet-bg" id="sb"><div class="sheet">
+    <div class="sheet-handle"></div><div class="wt-h" style="margin-top:0">Save to playlist</div>
+    <div id="pls"></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><input class="input" id="npn" maxlength="60" placeholder="New playlist name" style="min-height:42px" /><button class="btn btn-primary btn-sm" id="npb" style="height:42px">Create</button></div>
+  </div></div>
+
   <div class="wt-cbar">
+    <button class="btn btn-sm btn-ghost" id="rc" style="display:none;height:42px">✕</button>
     <input class="input" id="ci" maxlength="500" placeholder="Add a comment…" />
     <button class="btn btn-primary btn-sm" id="cs" style="height:42px">Send</button>
   </div>
 
   <script type="module">
     import {
-      db, doc, getDocs, updateDoc, deleteDoc, arrayUnion, arrayRemove, increment,
+      db, doc, getDoc, setDoc, getDocs, where, updateDoc, deleteDoc, arrayUnion, arrayRemove, increment,
       collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
     } from './js/firebase-init.js';
     import { requireAuth, showToast } from './js/app.js';
@@ -134,10 +144,28 @@
       else if (e.key === 'm') $('mu').click();
     });
 
+    /* ---------- Quality ---------- */
+    const QS = [['Auto', 0], ['1080p', 1080], ['720p', 720], ['480p', 480], ['360p', 360]];
+    let qh = +localStorage.gx_q || 0;
+    function setSrc() {
+      const t = v.currentTime, was = !v.paused;
+      v.src = srcOf(vd.videoURL, qh);
+      $('qual').textContent = QS.find((q) => q[1] === qh)[0];
+      v.addEventListener('loadedmetadata', () => { if (t) v.currentTime = t; if (was) v.play(); }, { once: true });
+    }
+    $('qual').addEventListener('click', () => {
+      $('qm').innerHTML = QS.map((q) => `<button data-h="${q[1]}" class="${q[1] === qh ? 'on' : ''}">${q[0]}</button>`).join('');
+      $('qm').classList.toggle('open');
+    });
+    $('qm').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-h]'); if (!b) return;
+      qh = +b.dataset.h; localStorage.gx_q = qh; $('qm').classList.remove('open'); setSrc();
+    });
+
     /* ---------- Video data ---------- */
     function render() {
       $('loading').style.display = 'none'; $('info').style.display = 'block';
-      if (!v.getAttribute('src')) { v.src = srcOf(vd.videoURL); v.poster = thumbOf(vd); }
+      if (!v.getAttribute('src')) { v.poster = thumbOf(vd); setSrc(); }
       document.title = vd.title + ' — GAIVEX';
       $('title').textContent = vd.title;
       $('sub').textContent = `${fmtNum(vd.views)} views · ${ago(vd.createdAt)}`;
@@ -175,31 +203,43 @@
       catch (e) { console.error(e); showToast('Could not delete.'); }
     });
 
-    /* ---------- Comments ---------- */
-    function watchComments() {
-      onSnapshot(query(collection(db, 'videos', id, 'comments'), orderBy('createdAt', 'desc')), (s) => {
-        $('clist').innerHTML = s.empty ? '<p class="vd-empty" style="padding:20px 0">No comments yet.</p>' : s.docs.map((d) => {
-          const c = d.data();
-          const canDel = c.uid === me.uid || (vd && vd.uid === me.uid);
-          return `<div class="cm"><div class="wt-av" style="width:34px;height:34px;font-size:12px">${avatarHtml(c.photoURL, c.name)}</div>
-            <div class="cm-bubble"><b>${esc(c.name || 'GAIVEX user')}</b><small>${ago(c.createdAt)}</small><p>${esc(c.text)}</p>
-            ${canDel ? `<button class="cm-del" data-d="${d.id}">Delete</button>` : ''}</div></div>`;
-        }).join('');
-      });
+    /* ---------- Comments + replies ---------- */
+    let replyTo = null, allC = [];
+    const cHtml = (d, rp) => {
+      const c = d.data(), canDel = c.uid === me.uid || (vd && vd.uid === me.uid), sz = rp ? 28 : 34;
+      return `<div class="cm ${rp ? 'rp' : ''}"><div class="wt-av" style="width:${sz}px;height:${sz}px;font-size:11px">${avatarHtml(c.photoURL, c.name)}</div>
+        <div class="cm-bubble"><b>${esc(c.name || 'GAIVEX user')}</b><small>${ago(c.createdAt)}</small><p>${esc(c.text)}</p>
+        <div class="cm-act">${rp ? '' : `<button data-r="${d.id}" data-n="${esc(c.name || '')}">Reply</button>`}${canDel ? `<button data-d="${d.id}">Delete</button>` : ''}</div></div></div>`;
+    };
+    function drawComments() {
+      const tops = allC.filter((d) => !d.data().parentId).reverse();
+      $('clist').innerHTML = tops.length
+        ? tops.map((t) => cHtml(t) + allC.filter((r) => r.data().parentId === t.id).map((r) => cHtml(r, true)).join('')).join('')
+        : '<p class="vd-empty" style="padding:20px 0">No comments yet.</p>';
     }
+    function watchComments() {
+      onSnapshot(query(collection(db, 'videos', id, 'comments'), orderBy('createdAt', 'asc')), (s) => { allC = s.docs; drawComments(); });
+    }
+    function clearReply() { replyTo = null; $('ci').placeholder = 'Add a comment…'; $('rc').style.display = 'none'; }
+    $('rc').addEventListener('click', clearReply);
     $('clist').addEventListener('click', async (e) => {
+      const r = e.target.closest('[data-r]');
+      if (r) { replyTo = r.dataset.r; $('ci').placeholder = 'Replying to ' + r.dataset.n + '…'; $('rc').style.display = 'inline-flex'; $('ci').focus(); return; }
       const b = e.target.closest('[data-d]'); if (!b) return;
+      let n = 1;
       try {
+        for (const k of allC.filter((d) => d.data().parentId === b.dataset.d)) { try { await deleteDoc(k.ref); n++; } catch (_) {} }
         await deleteDoc(doc(db, 'videos', id, 'comments', b.dataset.d));
-        await updateDoc(doc(db, 'videos', id), { commentsCount: increment(-1) });
+        await updateDoc(doc(db, 'videos', id), { commentsCount: increment(-n) });
       } catch (err) { console.error(err); showToast('Could not delete.'); }
     });
     async function sendComment() {
       const text = $('ci').value.trim(); if (!text) return;
       $('ci').value = '';
+      const parentId = replyTo; clearReply();
       try {
         await addDoc(collection(db, 'videos', id, 'comments'), {
-          uid: me.uid, name: me.displayName || me.email.split('@')[0], photoURL: me.photoURL || '', text, createdAt: serverTimestamp(),
+          uid: me.uid, name: me.displayName || me.email.split('@')[0], photoURL: me.photoURL || '', text, parentId: parentId || null, createdAt: serverTimestamp(),
         });
         await updateDoc(doc(db, 'videos', id), { commentsCount: increment(1) });
       } catch (e) { console.error(e); $('ci').value = text; showToast('Could not post comment.'); }
@@ -207,15 +247,70 @@
     $('cs').addEventListener('click', sendComment);
     $('ci').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendComment(); });
 
+    /* ---------- Orbit (follow a creator) ---------- */
+    let inOrbit = false, orbitOn = false;
+    function watchOrbit() {
+      onSnapshot(query(collection(db, 'orbits'), where('creator', '==', vd.uid)), (s) => {
+        $('oc').textContent = fmtNum(s.size) + (s.size === 1 ? ' orbiter' : ' orbiters');
+        inOrbit = s.docs.some((d) => d.data().member === me.uid);
+        $('orbit').textContent = inOrbit ? '✓ In Orbit' : '🪐 Orbit';
+        $('orbit').classList.toggle('btn-primary', !inOrbit);
+        $('orbit').classList.toggle('btn-soft', inOrbit);
+      });
+    }
+    $('orbit').addEventListener('click', async () => {
+      const ref = doc(db, 'orbits', vd.uid + '_' + me.uid);
+      try {
+        if (inOrbit) await deleteDoc(ref);
+        else await setDoc(ref, { creator: vd.uid, member: me.uid, creatorName: vd.authorName || '', createdAt: serverTimestamp() });
+      } catch (e) { console.error(e); showToast('Could not update.'); }
+    });
+
+    /* ---------- Playlists ---------- */
+    let myPls = [], nextUrl = null;
+    const listId = new URLSearchParams(location.search).get('list');
+    function drawPls() {
+      $('pls').innerHTML = myPls.length ? myPls.map((d) => {
+        const p = d.data(), on = (p.videoIds || []).includes(id);
+        return `<button class="pls-row ${on ? 'on' : ''}" data-p="${d.id}">${on ? '☑' : '☐'} ${esc(p.name)}<small>${(p.videoIds || []).length}</small></button>`;
+      }).join('') : '<p class="vd-empty" style="padding:12px 0">No playlists yet. Create one below.</p>';
+    }
+    $('save').addEventListener('click', () => $('sb').classList.add('open'));
+    $('sb').addEventListener('click', (e) => { if (e.target === $('sb')) $('sb').classList.remove('open'); });
+    $('pls').addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-p]'); if (!b) return;
+      const d = myPls.find((x) => x.id === b.dataset.p), on = (d.data().videoIds || []).includes(id);
+      try { await updateDoc(d.ref, { videoIds: on ? arrayRemove(id) : arrayUnion(id) }); showToast(on ? 'Removed from playlist' : 'Saved to playlist'); }
+      catch (err) { console.error(err); showToast('Could not update.'); }
+    });
+    $('npb').addEventListener('click', async () => {
+      const name = $('npn').value.trim(); if (!name) return;
+      try {
+        await addDoc(collection(db, 'playlists'), { uid: me.uid, ownerName: me.displayName || me.email.split('@')[0], name, videoIds: [id], createdAt: serverTimestamp() });
+        $('npn').value = ''; showToast('Playlist created ✦');
+      } catch (e) { console.error(e); showToast('Could not create playlist.'); }
+    });
+    v.addEventListener('ended', () => { if (nextUrl) location.href = nextUrl; });
+
     /* ---------- Up next ---------- */
+    const upHtml = (vid, x, cur) => `<a class="up ${cur ? 'cur' : ''}" href="watch.html?id=${vid}${listId ? '&list=' + listId : ''}"><img src="${esc(thumbOf(x))}" alt="" loading="lazy" />
+      <div><b>${esc(x.title)}</b><span>${esc(x.authorName || '')}</span><span>${fmtNum(x.views)} views · ${fmtDur(x.duration)}</span></div></a>`;
     async function loadUpNext() {
       try {
+        if (listId) {
+          const pl = await getDoc(doc(db, 'playlists', listId));
+          if (pl.exists()) {
+            const vs = (await Promise.all((pl.data().videoIds || []).map((i) => getDoc(doc(db, 'videos', i))))).filter((x) => x.exists());
+            const k = vs.findIndex((x) => x.id === id);
+            if (k >= 0 && vs[k + 1]) nextUrl = `watch.html?id=${vs[k + 1].id}&list=${listId}`;
+            $('uph').textContent = 'Playlist · ' + pl.data().name;
+            $('up').innerHTML = vs.map((d) => upHtml(d.id, d.data(), d.id === id)).join('');
+            return;
+          }
+        }
         const s = await getDocs(query(collection(db, 'videos'), orderBy('createdAt', 'desc'), limit(12)));
-        $('up').innerHTML = s.docs.filter((d) => d.id !== id).map((d) => {
-          const x = d.data();
-          return `<a class="up" href="watch.html?id=${d.id}"><img src="${esc(thumbOf(x))}" alt="" loading="lazy" />
-            <div><b>${esc(x.title)}</b><span>${esc(x.authorName || '')}</span><span>${fmtNum(x.views)} views · ${fmtDur(x.duration)}</span></div></a>`;
-        }).join('') || '<p class="vd-empty" style="padding:10px 0">Nothing else yet.</p>';
+        $('up').innerHTML = s.docs.filter((d) => d.id !== id).map((d) => upHtml(d.id, d.data())).join('')
+          || '<p class="vd-empty" style="padding:10px 0">Nothing else yet.</p>';
       } catch (e) { console.warn(e); }
     }
 
@@ -223,8 +318,11 @@
       me = await requireAuth(); if (!me) return;
       onSnapshot(doc(db, 'videos', id), (s) => {
         if (!s.exists()) { $('loading').textContent = 'This video was removed.'; $('info').style.display = 'none'; return; }
-        vd = s.data(); render();
+        vd = s.data(); render(); drawComments();
+        $('orbit').style.display = vd.uid === me.uid ? 'none' : 'inline-flex';
+        if (!orbitOn) { orbitOn = true; watchOrbit(); }
       });
+      onSnapshot(query(collection(db, 'playlists'), where('uid', '==', me.uid)), (s) => { myPls = s.docs; drawPls(); });
       watchComments(); loadUpNext();
     })();
   </script>
