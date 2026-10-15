@@ -24,12 +24,13 @@
     <div class="wt-main">
       <div class="pl paused" id="pl">
         <video id="v" playsinline preload="metadata"></video>
+        <div class="pl-mpop" id="mpop"></div>
         <div class="pl-ui">
           <span class="pl-skip l" id="skl">« 10s</span><span class="pl-skip r" id="skr">10s »</span>
           <button class="pl-big" id="big" aria-label="Play">▶</button>
           <div class="pl-menu" id="qm"></div>
           <div class="pl-bar">
-            <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek" />
+            <div class="pl-sw"><div class="pl-marks" id="marks"></div><input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek" /></div>
             <div class="pl-row">
               <button id="pp" aria-label="Play/Pause">▶</button>
               <span id="tm">0:00 / 0:00</span><span class="sp"></span>
@@ -52,9 +53,11 @@
         <div class="wt-actions">
           <button class="wt-pill" id="like">♡ <span id="lc">0</span></button>
           <button class="wt-pill" id="dis">👎 <span id="dc">0</span></button>
+          <button class="wt-pill" id="mom">✦ Moment</button>
           <button class="wt-pill" id="save">＋ Save</button>
           <button class="wt-pill" id="share">↗ Share</button>
         </div>
+        <div id="mwrap" style="display:none"><div class="wt-h" style="margin-top:6px">✦ Moments</div><div class="mm-list" id="mlist"></div></div>
         <div class="wt-desc" id="desc"></div>
         <div class="wt-h" id="cch">Comments</div>
         <div id="clist"></div>
@@ -67,6 +70,12 @@
     <div class="sheet-handle"></div><div class="wt-h" style="margin-top:0">Save to playlist</div>
     <div id="pls"></div>
     <div style="display:flex;gap:8px;margin-top:12px"><input class="input" id="npn" maxlength="60" placeholder="New playlist name" style="min-height:42px" /><button class="btn btn-primary btn-sm" id="npb" style="height:42px">Create</button></div>
+  </div></div>
+
+  <div class="sheet-bg" id="mb"><div class="sheet">
+    <div class="sheet-handle"></div><div class="wt-h" style="margin-top:0">✦ Pin a moment at <span id="mt">0:00</span></div>
+    <input class="input" id="mi" maxlength="80" placeholder="What happens here? (e.g. best part, key point)" />
+    <button class="btn btn-primary btn-block" id="mbtn" style="margin-top:12px">Pin moment</button>
   </div></div>
 
   <div class="wt-cbar">
@@ -148,7 +157,8 @@
     const QS = [['Auto', 0], ['1080p', 1080], ['720p', 720], ['480p', 480], ['360p', 360]];
     let qh = +localStorage.gx_q || 0;
     function setSrc() {
-      const t = v.currentTime, was = !v.paused;
+      let t = v.currentTime; const was = !v.paused;
+      if (!t && !resumedOnce) { resumedOnce = true; if (resumeAt > 5) { t = resumeAt; showToast('Resumed from ' + fmtDur(t)); } }
       v.src = srcOf(vd.videoURL, qh);
       $('qual').textContent = QS.find((q) => q[1] === qh)[0];
       v.addEventListener('loadedmetadata', () => { if (t) v.currentTime = t; if (was) v.play(); }, { once: true });
@@ -314,6 +324,50 @@
       } catch (e) { console.warn(e); }
     }
 
+    /* ---------- Moments (pin a note to an exact second) + Resume ---------- */
+    let moments = [], lastPop = '', popT = null, pinAt = 0, resumedOnce = false;
+    const resumeAt = +localStorage['gx_pos_' + id] || 0;
+    function drawMoments() {
+      const d = v.duration || (vd && vd.duration) || 0;
+      $('mwrap').style.display = moments.length ? 'block' : 'none';
+      $('marks').innerHTML = d ? moments.map((m) => `<i style="left:${Math.min(100, (m.t / d) * 100)}%"></i>`).join('') : '';
+      $('mlist').innerHTML = moments.map((m) => `<div class="mm"><button data-t="${m.t}"><b>${fmtDur(m.t)}</b>${esc(m.text)}</button><small>${esc(m.name)}</small>
+        ${(m.uid === me.uid || (vd && vd.uid === me.uid)) ? `<button class="mm-x" data-x="${m.id}" aria-label="Delete">✕</button>` : ''}</div>`).join('');
+    }
+    function watchMoments() {
+      onSnapshot(query(collection(db, 'videos', id, 'moments'), orderBy('t', 'asc')), (s) => {
+        moments = s.docs.map((d) => ({ id: d.id, ...d.data() })); drawMoments();
+      });
+    }
+    v.addEventListener('loadedmetadata', drawMoments);
+    v.addEventListener('timeupdate', () => {
+      const c = v.currentTime;
+      if (c > 5 && Math.floor(c) % 5 === 0) localStorage['gx_pos_' + id] = c;
+      const m = moments.find((x) => Math.abs(x.t - c) < 0.6);
+      if (m && lastPop !== m.id) {
+        lastPop = m.id; $('mpop').textContent = '✦ ' + m.text; $('mpop').classList.add('on');
+        clearTimeout(popT); popT = setTimeout(() => $('mpop').classList.remove('on'), 4000);
+      } else if (!m) lastPop = '';
+    });
+    v.addEventListener('ended', () => localStorage.removeItem('gx_pos_' + id));
+    $('mlist').addEventListener('click', async (e) => {
+      const g = e.target.closest('[data-t]'), x = e.target.closest('[data-x]');
+      if (g) { v.currentTime = +g.dataset.t; v.play(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      else if (x) { try { await deleteDoc(doc(db, 'videos', id, 'moments', x.dataset.x)); } catch (err) { console.error(err); showToast('Could not delete.'); } }
+    });
+    $('mom').addEventListener('click', () => {
+      pinAt = Math.floor(v.currentTime); v.pause();
+      $('mt').textContent = fmtDur(pinAt); $('mb').classList.add('open'); $('mi').focus();
+    });
+    $('mb').addEventListener('click', (e) => { if (e.target === $('mb')) $('mb').classList.remove('open'); });
+    $('mbtn').addEventListener('click', async () => {
+      const text = $('mi').value.trim(); if (!text) return showToast('Write a short note.');
+      try {
+        await addDoc(collection(db, 'videos', id, 'moments'), { uid: me.uid, name: me.displayName || me.email.split('@')[0], t: pinAt, text, createdAt: serverTimestamp() });
+        $('mi').value = ''; $('mb').classList.remove('open'); showToast('Moment pinned ✦');
+      } catch (e) { console.error(e); showToast('Could not pin moment.'); }
+    });
+
     (async () => {
       me = await requireAuth(); if (!me) return;
       onSnapshot(doc(db, 'videos', id), (s) => {
@@ -323,7 +377,7 @@
         if (!orbitOn) { orbitOn = true; watchOrbit(); }
       });
       onSnapshot(query(collection(db, 'playlists'), where('uid', '==', me.uid)), (s) => { myPls = s.docs; drawPls(); });
-      watchComments(); loadUpNext();
+      watchComments(); watchMoments(); loadUpNext();
     })();
   </script>
 </body>
