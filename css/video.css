@@ -111,3 +111,16 @@
 .pl-card span.s { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .pl-new { display: flex; gap: 8px; margin-bottom: 14px; }
 .pl-new input { min-height: 44px; }
+
+/* ---------- Moments ---------- */
+.pl-sw { position: relative; }
+.pl-marks { position: absolute; left: 7px; right: 7px; top: 50%; height: 0; pointer-events: none; z-index: 1; }
+.pl-marks i { position: absolute; top: -9px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 8px var(--pink); }
+.pl-mpop { position: absolute; left: 12px; top: 12px; z-index: 4; max-width: 70%; padding: 8px 14px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; background: var(--glass-dark); border: 1px solid rgba(255,79,184,.5); backdrop-filter: blur(10px); box-shadow: var(--shadow-pink); opacity: 0; transform: translateY(-6px); transition: .3s; pointer-events: none; }
+.pl-mpop.on { opacity: 1; transform: none; }
+.mm-list { display: flex; flex-direction: column; gap: 6px; max-height: 190px; overflow: auto; }
+.mm { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--radius-md); background: var(--glass-1); border: 1px solid var(--line-soft); }
+.mm > button:first-child { flex: 1; min-width: 0; text-align: left; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mm b { display: inline-block; min-width: 44px; margin-right: 8px; color: var(--pink-soft); font-weight: 800; }
+.mm small { font-size: 11px; color: var(--text-muted); }
+.mm-x { color: var(--text-muted); font-size: 12px; padding: 4px; }
