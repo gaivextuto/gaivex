@@ -13,7 +13,8 @@ export const thumbOf = (v) => v.thumbURL ||
   (v.videoURL || '').replace('/video/upload/', '/video/upload/so_2,w_640,h_400,c_fill,q_auto/').replace(/\.[a-z0-9]+$/i, '.jpg');
 
 // প্লে করার URL (Cloudinary অটো কোয়ালিটি)
-export const srcOf = (u) => (u || '').replace('/video/upload/', '/video/upload/q_auto/');
+// h = 0 → Auto, নইলে 1080/720/480/360
+export const srcOf = (u, h = 0) => (u || '').replace('/video/upload/', '/video/upload/' + (h ? `h_${h},c_limit,` : '') + 'q_auto/');
 
 export function fmtDur(s) {
   s = Math.max(0, Math.floor(s || 0));
